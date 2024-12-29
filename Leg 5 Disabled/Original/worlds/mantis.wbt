@@ -1,0 +1,104 @@
+#VRML_SIM R2023b utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/UnevenTerrain.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/appearances/protos/SandyGround.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/robots/micromagic/mantis/protos/Mantis.proto"
+
+WorldInfo {
+  info [
+    "Mantis Hexapod Robot"
+    "Author: Matt Denton"
+  ]
+  title "Mantis Hexapod"
+  ERP 0.62
+  basicTimeStep 10
+  contactProperties [
+    ContactProperties {
+      coulombFriction [
+        12
+      ]
+      softCFM 1e-05
+    }
+  ]
+}
+Viewpoint {
+  orientation -0.16008548792470778 -0.21116864801874996 0.9642512321225426 4.776819620849644
+  position 3.3096771612300158 44.07935838538594 68.58211327586149
+  follow "Mantis"
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+UnevenTerrain {
+  rotation 0 0 1 -1.5708
+  size 1000 1000 100
+  xDimension 100
+  yDimension 100
+  appearance SandyGround {
+    textureTransform TextureTransform {
+      scale 1000 1000
+    }
+  }
+  perlinNOctaves 8
+}
+Mantis {
+  hidden position_0_0 -0.699818778125061
+  hidden position_0_1 0.0003427591794476062
+  hidden position_0_2 0.699903958534031
+  hidden position_0_3 -0.7001514218999718
+  hidden position_0_4 -0.00015088237499079072
+  hidden position_0_5 0.6995872274087394
+  hidden rotation_3 0.31246568277145 -0.6716982717553777 -0.6717042718421629 2.535896401744285
+  hidden position_3_0 0.7861520889739678
+  hidden rotation_4 0 0 1 0.78575608897533
+  hidden position_4_0 -2.2999896140615927
+  hidden rotation_5 0 0 -1 2.2999896140615927
+  hidden translation_8 1.5999970947903677 -3.881403060290722e-06 -2.7656933916375692e-06
+  hidden rotation_8 0.03202474074514774 0.5680496399738602 -0.8223709762058569 7.23206259567315e-07
+  hidden rotation_12 0.577421943447146 -0.5773124286958528 -0.5773164287451177 2.094300485938412
+  hidden position_12_0 0.7861387560413399
+  hidden rotation_13 0 0 1 0.785742756041581
+  hidden position_13_0 -2.299951670216532
+  hidden rotation_14 0 0 -1 2.299971670195155
+  hidden translation_17 1.600001571222215 -8.024983078058767e-08 1.0506286329814429e-07
+  hidden rotation_17 0.31340817293662454 -0.5738579274676415 0.7566124478351318 3.864513301585515e-11
+  hidden rotation_21 0.8353491436968398 -0.388710066571441 -0.38871106527983257 1.7497507372869914
+  hidden position_21_0 0.7874305232509808
+  hidden rotation_22 0 0 1 0.7870345232523432
+  hidden position_22_0 -2.299885916546561
+  hidden rotation_23 0 0 -0.9999999999999999 2.2999059165473885
+  hidden translation_26 1.5998191543084488 6.7244039989589055e-06 -4.073707813745386e-06
+  hidden rotation_26 -0.001992013358628296 0.48423543914600514 0.8749354669676243 6.724838270009017e-07
+  hidden rotation_30 0.8359583750529322 0.38805164761941124 0.38805864757626707 1.7490307168482575
+  hidden position_30_0 0.7861381796996287
+  hidden rotation_31 0 0 0.9999999999999999 0.7857421797009904
+  hidden position_31_0 -2.299962950200891
+  hidden rotation_32 0 0 -1 2.2999829502017186
+  hidden translation_35 1.6000015833851862 -1.6282918480214903e-07 -7.094656595540982e-08
+  hidden rotation_35 -0.03551443523742668 -0.09943802281802806 -0.9944097769570691 3.475461286024529e-11
+  hidden rotation_39 0.5779623943259172 0.5770399631215225 0.5770479630895208 2.093483563094068
+  hidden position_39_0 0.7861387490342996
+  hidden rotation_40 0 0 1 0.7857427490345402
+  hidden position_40_0 -2.299951771152082
+  hidden rotation_41 0 0 -0.9999999999999999 2.2999717711529093
+  hidden translation_44 1.6000015839917836 -9.853981097762698e-08 -1.0090303703691461e-07
+  hidden rotation_44 0.0617133489987065 0.5899266297488578 -0.8050950466053793 3.5787503007382e-11
+  hidden rotation_48 0.31313889157813607 0.6715405011638506 0.6715485015081344 2.534660919769461
+  hidden position_48_0 0.7874096205527307
+  hidden rotation_49 0 0 1 0.7870136205540926
+  hidden position_49_0 -2.3000106220204892
+  hidden rotation_50 0 0 -0.9999999999999999 2.3000306219991122
+  hidden translation_53 1.5998146406317701 -4.9213216577470575e-06 1.0351238529437978e-05
+  hidden rotation_53 -0.020328311877050424 -0.7119907749623527 -0.7018945049683305 1.4067708675637624e-06
+  translation 6.160960988497287 24.08646487667829 61.3591783745818
+  rotation 0.03125814128046004 -0.03913732036488227 0.998744811630252 1.3035737695105172
+  controller "leg_5_disabled_original_ga"
+  supervisor TRUE
+  extensionSlot [
+    GPS {
+    }
+  ]
+}
