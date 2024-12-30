@@ -44,7 +44,7 @@ gps.enable(TIME_STEP)
 keyboard = robot.getKeyboard()
 keyboard.enable(TIME_STEP)
 
-# Global debug flag6
+# Global debug flag
 debug_mode = False # Print info about motor positions in real time
 print_fitness = True # Print Amplitude, Phase, Offset, and Fitness info for each leg
 
