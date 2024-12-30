@@ -1,4 +1,4 @@
-Evolving a hexapod gait using a GA. In this project, this was done by evolving each leg as its own individual population (.../Mantis GA Individual Legs) and evolving each gait as a whole (.../Mantis GA). This was done again with one leg disabled, for each leg, in both the individual leg evolution model (.../Leg x Disabled/Individual Legs) and whole gait evolution model (.../Leg x Disabled/Original). 
+Evolving a hexapod gait using a GA. In this project, this was done by evolving each leg as its own individual population both by evolving legs one at a time, using legs from previous generations to support the gait (.../Mantis GA Individual Legs) and evolving each leg in parrallel (.../Mantis GA Individual Legs Parallel). This was also done evolving each gait as a whole (.../Mantis GA). This was done again with one leg disabled, for each leg, in both the individual leg evolution models (.../Leg x Disabled/Individual Legs) + (.../Leg x Disabled/Individual Legs Parallel), and whole gait evolution model (.../Leg x Disabled/Original). 
 
 NOTICE:
 

@@ -1,8 +1,3 @@
-#Note: 
-
-# Script will reset webots world after each run, this is to avoid deterioration of the physics in the webots environment
-
-
 import threading # To always be taking in keyboard I/O
 from controller import Robot, GPS, Supervisor, Keyboard
 import math
@@ -14,6 +9,10 @@ import csv
 
 # Constants
 DISABLED_LEG = 5 # Disable this leg
+STUCK_BASE = math.radians(0)
+STUCK_SHOULDER = math.radians(0)
+STUCK_KNEE = math.radians(-30)
+
 NUM_LEGS = 6
 LEG_PARAMS = 3
 POPULATION_SIZE = 50
@@ -127,30 +126,38 @@ def evaluate_leg(leg_index, individual, best_individuals):
     while robot.getTime() - start_time < 20.0:
         time = robot.getTime()
         for i in range(NUM_LEGS):
-            leg_params = individual if i == leg_index and i != DISABLED_LEG else best_individuals[i] # For this leg evaluate the individual, and deafult all other legs to their best individuals
+            leg_params = individual if i == leg_index else best_individuals[i] # For this leg evaluate the individual, and deafult all other legs to their best individuals                
             for j in range(LEG_PARAMS):
-                position = (leg_params["amplitude"][j] *
-                            math.sin(2.0 * math.pi * f * time + leg_params["phase"][j]) +
-                            leg_params["offset"][j])
-                if j == 0:
-                    if debug_mode:
-                        print(f"First joint (base joint) position, before clamp: {position}") # Print position of base joint
-                    position = clamp(position, MIN_FOWARD_BEND_BASE, MAX_FOWARD_BEND_BASE)
-                    if debug_mode:
-                        print(f"First joint (base joint) position, after clamp: {position}") # Print position of base joint
-                if j == 1:
-                    if debug_mode:
-                        print(f"Second joint (shoulder joint) position, before clamp: {position}") # Print position of shoulder joint
-                    position = clamp(position, MIN_FOWARD_BEND_SHOULDER, MAX_FOWARD_BEND_SHOULDER)
-                    if debug_mode:
-                        print(f"Second joint (shoulder joint) position, after clamp: {position}") # Print position of shoulder joint
-                if j == 2:  # Clamp knee joint
-                    if debug_mode:
-                        print(f"Third joint (knee joint) position, before clamp: {position}") # Knee joint before clamp
-                    position = clamp(position, MIN_FORWARD_BEND_KNEE, MAX_FORWARD_BEND_KNEE)
-                    if debug_mode:
-                        print(f"Third joint (knee joint) position, after clamp: {position}") # Knee joint after clamp
-                motors[i * 3 + j].setPosition(position)
+                if i != DISABLED_LEG:
+                    position = (leg_params["amplitude"][j] *
+                                math.sin(2.0 * math.pi * f * time + leg_params["phase"][j]) +
+                                    leg_params["offset"][j])
+                    if j == 0:
+                        if debug_mode:
+                            print(f"First joint (base joint) position, before clamp: {position}") # Print position of base joint
+                        position = clamp(position, MIN_FOWARD_BEND_BASE, MAX_FOWARD_BEND_BASE) 
+                        if debug_mode:
+                            print(f"First joint (base joint) position, after clamp: {position}") # Print position of base joint
+                    if j == 1:
+                        if debug_mode:
+                            print(f"Second joint (shoulder joint) position, before clamp: {position}") # Print position of shoulder joint
+                        position = clamp(position, MIN_FOWARD_BEND_SHOULDER, MAX_FOWARD_BEND_SHOULDER)
+                        if debug_mode:
+                            print(f"Second joint (shoulder joint) position, after clamp: {position}") # Print position of shoulder joint
+                    if j == 2:  # Clamp knee joint
+                        if debug_mode:
+                            print(f"Third joint (knee joint) position, before clamp: {position}") # Knee joint before clamp
+                        position = clamp(position, MIN_FORWARD_BEND_KNEE, MAX_FORWARD_BEND_KNEE)
+                        if debug_mode:
+                            print(f"Third joint (knee joint) position, after clamp: {position}") # Knee joint after clamp
+                    motors[i * 3 + j].setPosition(position)
+                else:
+                    if j == 0:
+                        motors[i * 3 + j].setPosition(STUCK_BASE)            
+                    if j == 1:
+                        motors[i * 3 + j].setPosition(STUCK_SHOULDER)            
+                    if j == 2:
+                        motors[i * 3 + j].setPosition(STUCK_KNEE)
 
         robot.step(TIME_STEP)
         current_pos = gps.getValues()
@@ -214,14 +221,21 @@ def evolve_population(population):
     return new_population
    
 
-# Function to generate the next numbered file
-def get_next_evolution_file():
-    base_name = "evolution_data_run_"
+# Function to generate the next best fitnesses file
+def get_next_best_fitnesses_file():
+    base_directory = "best_fitnesses"
+    base_name = "best_fitnesses_run_"
     ext = ".txt"
     n = 1
-    while os.path.exists(f"{base_name}{n}{ext}"):
+    
+    # Ensure the directory exists
+    if not os.path.exists(base_directory):
+        os.makedirs(base_directory)
+    
+    # Generate file name with incremental number
+    while os.path.exists(os.path.join(base_directory, f"{base_name}{n}{ext}")):
         n += 1
-    return (f"{base_name}{n}{ext}"), n
+    return (os.path.join(base_directory, f"{base_name}{n}{ext}")), n
 
 # Save state to file
 def save_state(filename, populations, best_individuals, generation):
@@ -232,6 +246,7 @@ def save_state(filename, populations, best_individuals, generation):
     print(f"State saved to {filename}")
  
 def get_latest_checkpoint():
+    saves_directory = "saves"  # Define the directory where saves are stored
     base_name = "run_"
     gen_base = "_generation"
     ext = ""  # No extension since your checkpoints don't have one
@@ -239,7 +254,13 @@ def get_latest_checkpoint():
     latest_m = 0
     latest_checkpoint = None
 
-    for filename in os.listdir():
+    # Ensure the directory exists to avoid FileNotFoundError
+    if not os.path.exists(saves_directory):
+        print("No saves directory found.")
+        return None
+
+    # Iterate through files in the saves directory
+    for filename in os.listdir(saves_directory):
         if filename.startswith(base_name) and gen_base in filename:
             try:
                 # Extract n and m from the filename
@@ -252,19 +273,19 @@ def get_latest_checkpoint():
                 if n > latest_n or (n == latest_n and m > latest_m):
                     latest_n = n
                     latest_m = m
-                    latest_checkpoint = filename
+                    latest_checkpoint = os.path.join(saves_directory, filename)  # Include the path to the file
 
             except ValueError:
                 # Ignore files that don't match the expected pattern
                 continue
-                
-    print(latest_checkpoint)
+
+    print(f"Latest checkpoint: {latest_checkpoint}")
     return latest_checkpoint
  
 # Main Evolution Loop
 
 load_checkpoint = get_latest_checkpoint()  # Set to None if starting fresh
-#load_checkpoint = None 
+# load_checkpoint = None 
 
 # Load state from file
 def load_state(filename):
@@ -289,23 +310,44 @@ else:
     populations = [[create_individual() for _ in range(POPULATION_SIZE)] for _ in range(NUM_LEGS)]
     best_individuals = [create_individual() for _ in range(NUM_LEGS)] # Initial random best individuals (So robot can walk)
     generation = 0  # First gen
-    
-evolution_file_name, n = get_next_evolution_file()
-checkpoint_file = (f"run_{n}_generation{generation}") # Checkpoint organized by run and generation
- 
 
-print(f"Data will be saved to: {evolution_file_name}")
+# Define the directory for saves
+saves_directory = "saves"
+
+# Check if the saves directory exists, and create it if it does not
+if not os.path.exists(saves_directory):
+    os.makedirs(saves_directory)
+
+# Define the directory for saves
+saves_directory = "saves"
+
+# Check if the saves directory exists, and create it if it does not
+if not os.path.exists(saves_directory):
+    os.makedirs(saves_directory)
+
+best_fitnesses_file, n = get_next_best_fitnesses_file()
+checkpoint_file = os.path.join(saves_directory, f"run_{n}_generation{generation}") # Checkpoint organized by run and generation
 
 gens_per_run = 1 # 1 generations per run to avoid deterioration 
-csv_file_name = "evolution_data.csv"
+
+# Define the directory for the data
+data_directory = "data"
+csv_file_name = os.path.join(data_directory, "evolution_data.csv")
+
+print(f"Progress will be saved to: {checkpoint_file}, data will be saved to: {csv_file_name}")
+
+# Check if the directory exists, and create it if it does not
+if not os.path.exists(data_directory):
+    os.makedirs(data_directory)
 
 # Ensure CSV file has a header if it doesn't exist
 if not os.path.exists(csv_file_name):
     with open(csv_file_name, mode='w', newline='') as csv_file:
         csv_writer = csv.writer(csv_file)
         # Write the header row
-        csv_writer.writerow(['Run', 'Generation', 'Leg Index', 'Individual Index', 
+        csv_writer.writerow(['Run', 'Generation', 'Leg Index', 'Individual Index',
                              'Fitness', 'Amplitude', 'Phase', 'Offset'])
+
 
 with open(csv_file_name, mode='a', newline='') as csv_file:
     while gens_per_run > 0:
@@ -344,7 +386,7 @@ with open(csv_file_name, mode='a', newline='') as csv_file:
                 continue
             populations[leg_index] = evolve_population(populations[leg_index])
 
-        with open(evolution_file_name, "w") as file:
+        with open(best_fitnesses_file, "w") as file:
 
             # Log the best fitness for each leg
             for leg_index, best in enumerate(best_individuals):
