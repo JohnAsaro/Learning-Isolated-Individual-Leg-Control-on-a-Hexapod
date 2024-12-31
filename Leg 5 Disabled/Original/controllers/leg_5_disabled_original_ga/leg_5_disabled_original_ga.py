@@ -377,7 +377,7 @@ with open(csv_file_name, mode='a', newline='') as csv_file:
         # Evolve each population
         population = evolve_population(population)
         
-        with open(best_fitness_file, "w") as file:
+        with open(best_fitnesses_file, "w") as file:
 
             # Log the best fitness for each leg
             file.write(f"Generation {generation}, Best Fitness: {best_individual['fitness']:.3f}, "
