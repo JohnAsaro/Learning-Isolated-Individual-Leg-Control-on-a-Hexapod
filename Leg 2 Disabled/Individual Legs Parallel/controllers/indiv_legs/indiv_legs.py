@@ -72,9 +72,19 @@ keyboard_thread = threading.Thread(target=poll_keyboard, daemon=True)
 keyboard_thread.start()
 
 # Motor Initialization
-motor_names = ["RPC", "RPF", "RPT", "RMC", "RMF", "RMT",
-               "RAC", "RAF", "RAT", "LPC", "LPF", "LPT",
-               "LMC", "LMF", "LMT", "LAC", "LAF", "LAT"]
+#
+# Meaning of the motor charcters:
+# - 'R': Right / 'L': Left
+# - 'A': Front / 'M': Middle / 'P': Rear
+# - 'C': Base / 'F': Shoulder / 'T': Knee
+
+motor_names =  ["RAC", "RAF", "RAT", 
+                "LAC", "LAF", "LAT",
+               "RMC", "RMF", "RMT",
+               "LMC", "LMF", "LMT", 
+               "RPC", "RPF", "RPT",
+               "LPC", "LPF", "LPT"]
+
 motors = [robot.getDevice(name) for name in motor_names]
 for motor in motors:
     motor.setPosition(0.0)
