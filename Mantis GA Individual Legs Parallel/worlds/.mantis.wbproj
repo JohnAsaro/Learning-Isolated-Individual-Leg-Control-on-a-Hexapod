@@ -5,5 +5,5 @@ sceneTreePerspectives: 000000ff000000010000000300000026000000c0000000fa010000000
 maximizedDockId: -1
 centralWidgetVisible: 1
 orthographicViewHeight: 1
-textFiles: 0 "../Mantis GA Individual Legs Parallel/controllers/indiv_legs/indiv_legs.py"
+textFiles: 0 "controllers/indiv_legs/indiv_legs.py"
 consoles: Console:All:All
