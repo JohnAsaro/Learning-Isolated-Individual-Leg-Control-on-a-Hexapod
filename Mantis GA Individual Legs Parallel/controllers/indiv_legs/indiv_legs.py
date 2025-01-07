@@ -236,22 +236,21 @@ def evolve_population(population):
         new_population.append(child)
     return new_population
    
-
 # Function to generate the next best fitnesses file
 def get_next_best_fitnesses_file():
     base_directory = "best_fitnesses"
     base_name = "best_fitnesses_run_"
     ext = ".txt"
-    n = 1
+    n1 = 1
     
     # Ensure the directory exists
     if not os.path.exists(base_directory):
         os.makedirs(base_directory)
     
     # Generate file name with incremental number
-    while os.path.exists(os.path.join(base_directory, f"{base_name}{n}{ext}")):
-        n += 1
-    return (os.path.join(base_directory, f"{base_name}{n}{ext}")), n
+    while os.path.exists(os.path.join(base_directory, f"{base_name}{n1}{ext}")):
+        n1 += 1
+    return (os.path.join(base_directory, f"{base_name}{n1}{ext}")), n1
 
 # Save state to file
 def save_state(filename, populations, best_individuals, generation):
@@ -261,6 +260,22 @@ def save_state(filename, populations, best_individuals, generation):
                      'generation': generation}, file)
     print(f"State saved to {filename}")
  
+# Main Evolution Loop
+
+# Define the directory for saves
+saves_directory = "saves"
+
+# Check if the saves directory exists, and create it if it does not
+if not os.path.exists(saves_directory):
+    os.makedirs(saves_directory)
+
+# Define the directory for saves
+saves_directory = "saves"
+
+# Check if the saves directory exists, and create it if it does not
+if not os.path.exists(saves_directory):
+    os.makedirs(saves_directory)
+
 def get_latest_checkpoint():
     saves_directory = "saves"  # Define the directory where saves are stored
     base_name = "run_"
@@ -296,12 +311,7 @@ def get_latest_checkpoint():
                 continue
 
     print(f"Latest checkpoint: {latest_checkpoint}")
-    return latest_checkpoint
- 
-# Main Evolution Loop
-
-load_checkpoint = get_latest_checkpoint()  # Set to None if starting fresh
-# load_checkpoint = None 
+    return latest_checkpoint, latest_n
 
 # Load state from file
 def load_state(filename):
@@ -309,6 +319,12 @@ def load_state(filename):
         state = pickle.load(file)
     print(f"State loaded from {filename}")
     return state['populations'], state['best_individuals'], state['generation']
+
+best_fitnesses_file, n1 = get_next_best_fitnesses_file()
+gens_per_run = 1 # 1 generations per run to avoid deterioration 
+
+load_checkpoint, n2 = get_latest_checkpoint() 
+# load_checkpoint = None # Set to None if starting fresh
 
 # Initialize state
 if load_checkpoint:
@@ -327,24 +343,7 @@ else:
     best_individuals = [create_individual() for _ in range(NUM_LEGS)] # Initial random best individuals (So robot can walk)
     generation = 0  # First gen
 
-# Define the directory for saves
-saves_directory = "saves"
-
-# Check if the saves directory exists, and create it if it does not
-if not os.path.exists(saves_directory):
-    os.makedirs(saves_directory)
-
-# Define the directory for saves
-saves_directory = "saves"
-
-# Check if the saves directory exists, and create it if it does not
-if not os.path.exists(saves_directory):
-    os.makedirs(saves_directory)
-
-best_fitnesses_file, n = get_next_best_fitnesses_file()
-checkpoint_file = os.path.join(saves_directory, f"run_{n}_generation{generation}") # Checkpoint organized by run and generation
-
-gens_per_run = 1 # 1 generations per run to avoid deterioration 
+checkpoint_file = os.path.join(saves_directory, f"run_{n2+1}_generation{generation}") # Checkpoint organized by run and generation
 
 # Define the directory for the data
 data_directory = "data"
@@ -384,7 +383,7 @@ with open(csv_file_name, mode='a', newline='') as csv_file:
             for leg_index, individual in enumerate(individuals_to_evaluate):
                 if leg_index != DISABLED_LEG:
                     csv_writer.writerow([
-                        n,  # Run number
+                        n2+1,  # Run number
                         generation,  # Current generation
                         leg_index,  # Leg index
                         individual_index,  # Individual index
