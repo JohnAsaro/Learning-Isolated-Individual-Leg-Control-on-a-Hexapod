@@ -134,7 +134,7 @@ def evaluate(individuals, individual_index):
     max_distance, height_sum, height_samples = 0.0, 0.0, 0
     initial_pos = gps.getValues()
     f = 0.5  # Gait frequency
-    
+
     while robot.getTime() - start_time < 20.0:
         time = robot.getTime()
         for i in range(NUM_LEGS):
