@@ -1,5 +1,6 @@
 __pycache__
 *.jpg
+*.png
 **/best_fitnesses/*
 **/best_fitnesses
 best_fitnesses
