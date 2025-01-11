@@ -142,7 +142,7 @@ def evaluate_leg(leg_index, individual, best_individuals):
         time = robot.getTime()
         for i in range(NUM_LEGS):
             if i != DISABLED_LEG:
-                leg_params = individual if i == -1 else best_individuals[i] # For this leg evaluate the individual, and deafult all other legs to their best individuals
+                leg_params = individual if i == leg_index else best_individuals[i] # For this leg evaluate the individual, and deafult all other legs to their best individuals
                 for j in range(LEG_PARAMS):
                     position = (leg_params["amplitude"][j] *
                                 math.sin(2.0 * math.pi * f * time + leg_params["phase"][j]) +
