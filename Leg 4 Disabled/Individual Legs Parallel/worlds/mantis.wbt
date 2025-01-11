@@ -4,7 +4,7 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/UnevenTerrain.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/appearances/protos/SandyGround.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/robots/micromagic/mantis/protos/Mantis.proto"
+EXTERNPROTO "../protos/Mantis.proto"
 
 WorldInfo {
   info [
@@ -24,8 +24,8 @@ WorldInfo {
   ]
 }
 Viewpoint {
-  orientation -0.16008548792470778 -0.21116864801874996 0.9642512321225426 4.776819620849644
-  position 3.3096771612300158 44.07935838538594 68.58211327586149
+  orientation -0.19290742236137906 -0.1966671835090422 0.9613057501796757 4.543118932337886
+  position 7.940743239287886 35.05999664465892 66.2981637742798
   follow "Mantis"
 }
 TexturedBackground {
@@ -86,7 +86,7 @@ Mantis {
   hidden rotation_41 0 0 -0.9999999999999999 2.2999717711529093
   hidden translation_44 1.6000015839917836 -9.853981097762698e-08 -1.0090303703691461e-07
   hidden rotation_44 0.0617133489987065 0.5899266297488578 -0.8050950466053793 3.5787503007382e-11
-  hidden rotation_48 0.3131388915781359 0.6715405011638506 0.6715485015081346 2.534660919769461
+  hidden rotation_48 0.31313889157813585 0.6715405011638507 0.6715485015081345 2.5346609197694616
   hidden position_48_0 0.7874096205527307
   hidden rotation_49 0 0 1 0.7870136205540926
   hidden position_49_0 -2.3000106220204892
