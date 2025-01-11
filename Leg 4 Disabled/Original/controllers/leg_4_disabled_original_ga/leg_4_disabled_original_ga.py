@@ -21,6 +21,7 @@ POPULATION_SIZE = 50
 MUTATION_RATE = 0.1
 TIME_STEP = 32
 HEIGHT_WEIGHT = 0.2
+NUM_EVALS = 3 # Evaluate any given individual 3 times
 
 # Base joint range of motion
 MAX_FOWARD_BEND_BASE = math.radians(90)
@@ -127,58 +128,63 @@ def reset_robot():
 
 # Evaluate fitness of an individual
 def evaluate(individual):
-    reset_robot()
-    start_time = robot.getTime()
-    max_distance, height_sum, height_samples = 0.0, 0.0, 0
-    initial_pos = gps.getValues()
-    f = 0.5  # Gait frequency
-
-    # Calculate the range of indices for the disabled leg
-    disabled_leg_start = DISABLED_LEG * 3
-    disabled_leg_end = disabled_leg_start + 3
+    EVAL_TOTAL = 0
+    for _ in range(NUM_EVALS): # Evaluate this individual a number of times
+        reset_robot()
+        start_time = robot.getTime()
+        max_distance, height_sum, height_samples = 0.0, 0.0, 0
+        initial_pos = gps.getValues()
+        f = 0.5  # Gait frequency
     
-    while robot.getTime() - start_time < 20.0:
-        time = robot.getTime()
-        for i in range(PARAMS):
-            if disabled_leg_start <= i < disabled_leg_end: # Skip disabled leg
+        # Calculate the range of indices for the disabled leg
+        disabled_leg_start = DISABLED_LEG * 3
+        disabled_leg_end = disabled_leg_start + 3
+        
+        while robot.getTime() - start_time < 20.0:
+            time = robot.getTime()
+            for i in range(PARAMS):
+                if disabled_leg_start <= i < disabled_leg_end: # Skip disabled leg
+                        if i % 3 == 0:
+                            motors[disabled_leg_start].setPosition(STUCK_BASE)            
+                        if i % 3 == 1:
+                            motors[disabled_leg_start+1].setPosition(STUCK_SHOULDER)            
+                        if i % 3 == 2:
+                            motors[disabled_leg_start+2].setPosition(STUCK_KNEE) 
+                else:
+                    position = (individual["amplitude"][i] * math.sin(2.0 * math.pi * f * time + individual["phase"][i])
+                            + individual["offset"][i])
                     if i % 3 == 0:
-                        motors[disabled_leg_start].setPosition(STUCK_BASE)            
+                        if debug_mode:
+                            print(f"First joint (base joint) position, before clamp: {position}") # Print position of base joint
+                        position = clamp(position, MIN_FOWARD_BEND_BASE, MAX_FOWARD_BEND_BASE)
+                        if debug_mode:
+                            print(f"First joint (base joint) position, after clamp: {position}") # Print position of base joint
                     if i % 3 == 1:
-                        motors[disabled_leg_start+1].setPosition(STUCK_SHOULDER)            
-                    if i % 3 == 2:
-                        motors[disabled_leg_start+2].setPosition(STUCK_KNEE) 
-            else:
-                position = (individual["amplitude"][i] * math.sin(2.0 * math.pi * f * time + individual["phase"][i])
-                        + individual["offset"][i])
-                if i % 3 == 0:
-                    if debug_mode:
-                        print(f"First joint (base joint) position, before clamp: {position}") # Print position of base joint
-                    position = clamp(position, MIN_FOWARD_BEND_BASE, MAX_FOWARD_BEND_BASE)
-                    if debug_mode:
-                        print(f"First joint (base joint) position, after clamp: {position}") # Print position of base joint
-                if i % 3 == 1:
-                    if debug_mode:
-                        print(f"Second joint (shoulder joint) position, before clamp: {position}") # Print position of shoulder joint
-                    position = clamp(position, MIN_FOWARD_BEND_SHOULDER, MAX_FOWARD_BEND_SHOULDER)
-                    if debug_mode:
-                        print(f"Second joint (shoulder joint) position, after clamp: {position}") # Print position of shoulder joint
-                if i % 3 == 2:  # Clamp knee joint
-                    if debug_mode:
-                        print(f"Third joint (knee joint) position, before clamp: {position}") # Knee joint before clamp
-                    position = clamp(position, MIN_FORWARD_BEND_KNEE, MAX_FORWARD_BEND_KNEE)
-                    if debug_mode:
-                        print(f"Third joint (knee joint) position, after clamp: {position}") # Knee joint after clamp
-                motors[i].setPosition(position)
-
-        robot.step(TIME_STEP)
-        current_pos = gps.getValues()
-        distance = math.sqrt((current_pos[0] - initial_pos[0]) ** 2 + (current_pos[2] - initial_pos[2]) ** 2)
-        max_distance = max(max_distance, distance)
-        height_sum += current_pos[1]
-        height_samples += 1
-
-    avg_height = height_sum / height_samples if height_samples > 0 else 0.0
-    individual["fitness"] = max_distance + avg_height * HEIGHT_WEIGHT
+                        if debug_mode:
+                            print(f"Second joint (shoulder joint) position, before clamp: {position}") # Print position of shoulder joint
+                        position = clamp(position, MIN_FOWARD_BEND_SHOULDER, MAX_FOWARD_BEND_SHOULDER)
+                        if debug_mode:
+                            print(f"Second joint (shoulder joint) position, after clamp: {position}") # Print position of shoulder joint
+                    if i % 3 == 2:  # Clamp knee joint
+                        if debug_mode:
+                            print(f"Third joint (knee joint) position, before clamp: {position}") # Knee joint before clamp
+                        position = clamp(position, MIN_FORWARD_BEND_KNEE, MAX_FORWARD_BEND_KNEE)
+                        if debug_mode:
+                            print(f"Third joint (knee joint) position, after clamp: {position}") # Knee joint after clamp
+                    motors[i].setPosition(position)
+    
+            robot.step(TIME_STEP)
+            current_pos = gps.getValues()
+            distance = math.sqrt((current_pos[0] - initial_pos[0]) ** 2 + (current_pos[2] - initial_pos[2]) ** 2)
+            max_distance = max(max_distance, distance)
+            height_sum += current_pos[1]
+            height_samples += 1
+    
+        avg_height = height_sum / height_samples if height_samples > 0 else 0.0
+        THIS_EVAL = max_distance + avg_height * HEIGHT_WEIGHT
+        EVAL_TOTAL = THIS_EVAL + EVAL_TOTAL
+        
+    individual["fitness"] = EVAL_TOTAL/NUM_EVALS # Average of total evals
     
     # Print all info if debug mode on
     if print_fitness:
@@ -248,10 +254,11 @@ def get_next_best_fitnesses_file():
     return (os.path.join(base_directory, f"{base_name}{n1}{ext}")), n1
 
 # Save state to file
-def save_state(filename, populations, best_individuals, generation):
+def save_state(filename, populations, best_individual, best_overall, generation):
     with open(filename, 'wb') as file:
         pickle.dump({'populations': populations, 
-                     'best_individuals': best_individuals, 
+                     'best_individual': best_individual, # Best individual of this generation
+                     'best_overall': best_overall, # Best individual of all generations
                      'generation': generation}, file)
     print(f"State saved to {filename}")
  
@@ -313,7 +320,7 @@ def load_state(filename):
     with open(filename, 'rb') as file:
         state = pickle.load(file)
     print(f"State loaded from {filename}")
-    return state['populations'], state['best_individuals'], state['generation']
+    return state['populations'], state['best_individual'], state['best_overall'], state['generation']
 
 best_fitnesses_file, n1 = get_next_best_fitnesses_file()
 gens_per_run = 1 # 1 generations per run to avoid deterioration 
@@ -324,7 +331,7 @@ load_checkpoint, n2 = get_latest_checkpoint()  # Set to None if starting fresh
 # Initialize state
 if load_checkpoint:
     try:
-        population, best_individuals, generation = load_state(load_checkpoint)
+        population, best_individual, best_overall, generation = load_state(load_checkpoint)
         generation = generation + 1
         print(f"Loaded state from {load_checkpoint}: Resuming from generation {generation}")
     except FileNotFoundError:
@@ -335,7 +342,8 @@ if load_checkpoint:
         exit(1)
 else:
     population = [create_individual() for _ in range(POPULATION_SIZE)]
-    best_individuals = [create_individual() for _ in range(PARAMS)] # Initial random best individuals (So robot can walk)
+    best_individual = create_individual() # Initial random best individual
+    best_overall = best_individual
     generation = 0  # First gen
 
 checkpoint_file = os.path.join(saves_directory, f"run_{n2+1}_generation{generation}") # Checkpoint organized by run and generation
@@ -383,7 +391,8 @@ with open(csv_file_name, mode='a', newline='') as csv_file:
     
             # Update the best individual for this generation
             best_individual = max(population, key=lambda ind: ind["fitness"])
-
+            best_overall = max(best_individual, best_overall, key=lambda ind: ind["fitness"])
+            
         # Evolve each population
         population = evolve_population(population)
         
@@ -393,8 +402,14 @@ with open(csv_file_name, mode='a', newline='') as csv_file:
             file.write(f"Generation {generation}, Best Fitness: {best_individual['fitness']:.3f}, "
                        f"Amplitude: {best_individual['amplitude']}, "
                        f"Phase: {best_individual['phase']}, "
-                       f"Offset: {best_individual['offset']}\n")
-                                 
+                       f"Offset: {best_individual['offset']}\n"
+                       f"-------------------------------------\n"
+                       f"Generation {generation}, Best Overall: {best_overall['fitness']:.3f}, "
+                       f"Amplitude: {best_overall['amplitude']}, "
+                       f"Phase: {best_overall['phase']}, "
+                       f"Offset: {best_overall['offset']}\n"
+                       f"-------------------------------------\n")
+                                                        
             # Flush the file to ensure data is written
             file.flush()
             
@@ -408,7 +423,7 @@ with open(csv_file_name, mode='a', newline='') as csv_file:
             print(f"Offset: {best_individual['offset']}")
             print("------------------------------------------")
        
-        save_state(checkpoint_file, population, best_individuals, generation) # Make a checkpoint
+        save_state(checkpoint_file, population, best_individual, best_overall, generation) # Make a checkpoint
         
         generation += 1
         gens_per_run = gens_per_run - 1
