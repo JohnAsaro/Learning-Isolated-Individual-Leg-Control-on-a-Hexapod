@@ -4,7 +4,7 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/UnevenTerrain.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/appearances/protos/SandyGround.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/robots/micromagic/mantis/protos/Mantis.proto"
+EXTERNPROTO "../protos/Mantis.proto"
 
 WorldInfo {
   info [
@@ -58,7 +58,7 @@ Mantis {
   hidden rotation_5 0 0 -1 2.2999896140615927
   hidden translation_8 1.5999970947903677 -3.881403060290722e-06 -2.7656933916375692e-06
   hidden rotation_8 0.03202474074514774 0.5680496399738602 -0.8223709762058569 7.23206259567315e-07
-  hidden rotation_12 0.5774219434471461 -0.5773124286958528 -0.5773164287451176 2.094300485938412
+  hidden rotation_12 0.577421943447146 -0.5773124286958528 -0.5773164287451177 2.094300485938412
   hidden position_12_0 0.7861387560413399
   hidden rotation_13 0 0 1 0.785742756041581
   hidden position_13_0 -2.299951670216532
@@ -79,14 +79,14 @@ Mantis {
   hidden rotation_32 0 0 -1 2.2999829502017186
   hidden translation_35 1.6000015833851862 -1.6282918480214903e-07 -7.094656595540982e-08
   hidden rotation_35 -0.03551443523742668 -0.09943802281802806 -0.9944097769570691 3.475461286024529e-11
-  hidden rotation_39 0.5779623943259173 0.5770399631215225 0.5770479630895208 2.093483563094068
+  hidden rotation_39 0.5779623943259172 0.5770399631215225 0.5770479630895208 2.093483563094068
   hidden position_39_0 0.7861387490342996
   hidden rotation_40 0 0 1 0.7857427490345402
   hidden position_40_0 -2.299951771152082
   hidden rotation_41 0 0 -0.9999999999999999 2.2999717711529093
   hidden translation_44 1.6000015839917836 -9.853981097762698e-08 -1.0090303703691461e-07
   hidden rotation_44 0.0617133489987065 0.5899266297488578 -0.8050950466053793 3.5787503007382e-11
-  hidden rotation_48 0.31313889157813607 0.6715405011638504 0.6715485015081343 2.534660919769461
+  hidden rotation_48 0.31313889157813607 0.6715405011638506 0.6715485015081344 2.534660919769461
   hidden position_48_0 0.7874096205527307
   hidden rotation_49 0 0 1 0.7870136205540926
   hidden position_49_0 -2.3000106220204892
