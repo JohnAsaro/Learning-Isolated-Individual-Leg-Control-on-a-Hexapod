@@ -5,6 +5,6 @@ sceneTreePerspectives: 000000ff000000010000000300000026000000c0000000fa010000000
 maximizedDockId: -1
 centralWidgetVisible: 1
 orthographicViewHeight: 1
-textFiles: 0 "controllers/mantis_ga/mantis_ga.py" "../../Old Testing Stuff/Mantis_Unmodified/controllers/mantis/mantis.c" "protos/Mantis.proto"
+textFiles: 2 "controllers/mantis_ga/mantis_ga.py" "../../Old Testing Stuff/Mantis_Unmodified/controllers/mantis/mantis.c" "protos/Mantis.proto"
 centerOfMass: Mantis
 consoles: Console:All:All

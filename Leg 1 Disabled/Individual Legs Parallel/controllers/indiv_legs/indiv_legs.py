@@ -131,7 +131,12 @@ def reset_robot():
 # Evaluate each leg individually in parallel
 def evaluate(individuals, individual_index):
     EVAL_TOTALS = [0.0] * NUM_LEGS  # Initialize eval totals for averaging
+
+    LAST_LEG = 5 # We calculate fitness based on the distance the robot is at once the last leg has been evaluated
     
+    if DISABLED_LEG == 5:
+        LAST_LEG = 4
+
     for _ in range(NUM_EVALS):  # Evaluate 3 times
         reset_robot()
         start_time = robot.getTime()
@@ -183,10 +188,13 @@ def evaluate(individuals, individual_index):
                 height_samples += 1
         
                 avg_height = height_sum / height_samples if height_samples > 0 else 0.0
-                if i != DISABLED_LEG:
-                    individuals[i]["fitness"] = max_distance + avg_height * HEIGHT_WEIGHT
-                else: 
-                    individuals[i]["fitness"] = 0.0
+                
+                if i == LAST_LEG:
+                    for k in range(NUM_LEGS):
+                        if k != DISABLED_LEG:
+                            individuals[k]["fitness"] = max_distance + avg_height * HEIGHT_WEIGHT
+                        else: 
+                            individuals[k]["fitness"] = 0.0 # Disabled leg fitness = 0.0
 
         for i in range(NUM_LEGS):
             if i != DISABLED_LEG:
