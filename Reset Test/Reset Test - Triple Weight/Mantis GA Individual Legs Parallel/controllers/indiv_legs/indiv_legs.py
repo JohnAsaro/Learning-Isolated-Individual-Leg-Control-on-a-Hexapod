@@ -87,8 +87,19 @@ motor_names =  ["RAC", "RAF", "RAT",
                "LPC", "LPF", "LPT"]
 
 motors = [robot.getDevice(name) for name in motor_names]
-for motor in motors:
-    motor.setPosition(0.0)
+
+init_positions = [0.699903958534031, 0.7874305232509808, -2.299885916546561,
+                 -0.7001514218999718, 0.7861381796996287, -2.299962950200891,
+                 0.0003427591794476062, 0.7861387560413399, -2.299951670216532,
+                -0.00015088237499079072, 0.7861387490342996, -2.299951771152082,
+                -0.699818778125061, 0.7861520889739678, -2.2999896140615927,
+                0.6995872274087394, 0.7874096205527307, -2.3000106220204892]
+
+motors = [robot.getDevice(name) for name in motor_names]
+
+for motor, init_pos in zip(motors, init_positions):
+    motor.setPosition(init_pos)
+    #motor.setPosition(0.0)
 
 
 # Set initial position and rotation for reset
@@ -121,40 +132,43 @@ def clamp(value, min_value, max_value):
     
 # Reset robot to initial state
 def reset_robot():
-    for motor in motors:
-        motor.setPosition(0.0)
+    for motor, init_pos in zip(motors, init_positions):
+        motor.setPosition(init_pos)
+        #motor.setPosition(0.0)
     translation_field.setSFVec3f(initial_position)
     rotation_field.setSFRotation(initial_rotation)
     for _ in range(10):
         robot.step(TIME_STEP)
 
-# Evaluate one leg while other legs use the best individuals
-def evaluate_leg(leg_index, individual, best_individuals):
-    EVAL_TOTAL = 0
-        
-    for _ in range(NUM_EVALS): # Evaluate this individual a number of times
+# Evaluate each leg individually in parallel
+def evaluate(individuals, individual_index):
+    EVAL_TOTALS = [0.0] * NUM_LEGS  # Initialize eval totals for averaging
+
+    LAST_LEG = 5 # We calculate fitness based on the distance the robot is at once the last leg has been evaluated
+    
+    if DISABLED_LEG == 5:
+        LAST_LEG = 4
+
+    for _ in range(NUM_EVALS):  # Evaluate 3 times
         reset_robot()
         start_time = robot.getTime()
         max_distance, height_sum, height_samples = 0.0, 0.0, 0
         initial_pos = gps.getValues()
         f = 0.5  # Gait frequency
-    
-        if leg_index == DISABLED_LEG:
-            return
-    
+        
         while robot.getTime() - start_time < 20.0:
             time = robot.getTime()
             for i in range(NUM_LEGS):
-                if i != DISABLED_LEG:
-                    leg_params = individual if i == leg_index else best_individuals[i] # For this leg evaluate the individual, and deafult all other legs to their best individuals
-                    for j in range(LEG_PARAMS):
+                leg_params = individuals[i]
+                for j in range(LEG_PARAMS):
+                    if i != DISABLED_LEG:
                         position = (leg_params["amplitude"][j] *
                                     math.sin(2.0 * math.pi * f * time + leg_params["phase"][j]) +
-                                    leg_params["offset"][j])
+                                        leg_params["offset"][j])
                         if j == 0:
                             if debug_mode:
                                 print(f"First joint (base joint) position, before clamp: {position}") # Print position of base joint
-                            position = clamp(position, MIN_FOWARD_BEND_BASE, MAX_FOWARD_BEND_BASE)
+                            position = clamp(position, MIN_FOWARD_BEND_BASE, MAX_FOWARD_BEND_BASE) 
                             if debug_mode:
                                 print(f"First joint (base joint) position, after clamp: {position}") # Print position of base joint
                         if j == 1:
@@ -170,36 +184,48 @@ def evaluate_leg(leg_index, individual, best_individuals):
                             if debug_mode:
                                 print(f"Third joint (knee joint) position, after clamp: {position}") # Knee joint after clamp
                         motors[i * 3 + j].setPosition(position)
-                else:
-                    for j in range(LEG_PARAMS):
+                    else:
                         if j == 0:
                             motors[i * 3 + j].setPosition(STUCK_BASE)            
                         if j == 1:
                             motors[i * 3 + j].setPosition(STUCK_SHOULDER)            
                         if j == 2:
                             motors[i * 3 + j].setPosition(STUCK_KNEE)
-                     
-            robot.step(TIME_STEP)
-            current_pos = gps.getValues()
-            distance = math.sqrt((current_pos[0] - initial_pos[0]) ** 2 + (current_pos[2] - initial_pos[2]) ** 2)
-            max_distance = max(max_distance, distance)
-            height_sum += current_pos[1]
-            height_samples += 1
-    
-        avg_height = height_sum / height_samples if height_samples > 0 else 0.0
-        THIS_EVAL = max_distance + avg_height * HEIGHT_WEIGHT
-        EVAL_TOTAL = THIS_EVAL + EVAL_TOTAL
 
-    individual["fitness"] = EVAL_TOTAL/NUM_EVALS # Average of total evals
- 
-    # Print all info if debug mode on
-    if print_fitness:
-        print("\n--- Info for Leg", leg_index, "---")
-        print("Amplitude:", individual["amplitude"])
-        print("Phase:", individual["phase"])
-        print("Offset:", individual["offset"])
-        print("Fitness:", individual["fitness"])
-        print("--------------------------------------\n")
+                robot.step(TIME_STEP)
+                current_pos = gps.getValues()
+                distance = math.sqrt((current_pos[0] - initial_pos[0]) ** 2 + (current_pos[2] - initial_pos[2]) ** 2)
+                max_distance = max(max_distance, distance)
+                height_sum += current_pos[1]
+                height_samples += 1
+        
+                avg_height = height_sum / height_samples if height_samples > 0 else 0.0
+                
+                if i == LAST_LEG:
+                    for k in range(NUM_LEGS):
+                        if k != DISABLED_LEG:
+                            individuals[k]["fitness"] = max_distance + avg_height * HEIGHT_WEIGHT
+                        else: 
+                            individuals[k]["fitness"] = 0.0 # Disabled leg fitness = 0.0
+
+        for i in range(NUM_LEGS):
+            if i != DISABLED_LEG:
+                EVAL_TOTALS[i] += individuals[i]["fitness"]  # Accumulate final fitness for averaging
+
+    for i in range(NUM_LEGS):
+        # Calculate average fitness
+        individuals[i]["fitness"] = EVAL_TOTALS[i] / NUM_EVALS
+
+        # Print all info if debug mode on
+        if print_fitness and i != DISABLED_LEG:
+            print("\n--- Info for Leg", i, "for Individual", individual_index, "---")
+            print("Amplitude:", individuals[i]["amplitude"])
+            print("Phase:", individuals[i]["phase"])
+            print("Offset:", individuals[i]["offset"])
+            print("Fitness:", individuals[i]["fitness"])
+            print("--------------------------------------\n")
+            print("--------------------------------------\n")
+
 # Mutation
 def mutate(individual):
     for i in range(LEG_PARAMS):
@@ -262,7 +288,7 @@ def get_next_best_fitnesses_file():
 def save_state(filename, populations, best_individuals, best_overall, generation):
     with open(filename, 'wb') as file:
         pickle.dump({'populations': populations, 
-                     'best_individuals': best_individuals, 
+                     'best_individuals': best_individuals,
                      'best_overall': best_overall,
                      'generation': generation}, file)
     print(f"State saved to {filename}")
@@ -377,20 +403,19 @@ with open(csv_file_name, mode='a', newline='') as csv_file:
 
     while gens_per_run > 0:
         print(f"Generation {generation}")
-        
-        for leg_index in range(NUM_LEGS):
+           
+        for individual_index in range(POPULATION_SIZE):
+            individuals_to_evaluate = [populations[leg_index][individual_index] for leg_index in range(NUM_LEGS)]
             
-            if leg_index != DISABLED_LEG:
-                print(f"Evaluating leg {leg_index} for generation {generation}")
+            # Evaluate individuals
+            if print_fitness == True:
+                print(f"Evaluating individuals in set {individual_index} in generation {generation}")
             
-            for individual_index, individual in enumerate(populations[leg_index]): # Evaluate individual
-                if print_fitness == True and leg_index != DISABLED_LEG:
-                    print(f"Evaluating individual {individual_index} for leg {leg_index} in generation {generation}")
-                
+            evaluate(individuals_to_evaluate, individual_index)
+
+            # Log individual fitness/info to file for each leg
+            for leg_index, individual in enumerate(individuals_to_evaluate):
                 if leg_index != DISABLED_LEG:
-                    evaluate_leg(leg_index, individual, best_individuals)            
-                
-                    # Log individual fitness/info to file
                     csv_writer.writerow([
                         n2+1,  # Run number
                         generation,  # Current generation
@@ -401,19 +426,22 @@ with open(csv_file_name, mode='a', newline='') as csv_file:
                         individual['phase'],  # Phase list
                         individual['offset']  # Offset list
                     ])
-                        
+
+
                 # Update the best individual for this leg
                 if leg_index != DISABLED_LEG:
                     best_individuals[leg_index] = max(populations[leg_index], key=lambda ind: ind["fitness"])
                     if best_individuals[leg_index]['fitness'] > best_overall[leg_index]['fitness']:
                         best_overall[leg_index] = best_individuals[leg_index]    
-                                
+
         # Evolve each population
         for leg_index in range(NUM_LEGS):
             if leg_index != DISABLED_LEG:
                 populations[leg_index] = evolve_population(populations[leg_index])
 
-            # Write to evolution file and checkporint
+        with open(best_fitnesses_file, "w") as file:
+
+            # Write to evolution file and checkpoint
             with open(best_fitnesses_file, "w") as file:
                 for leg_index, best in enumerate(best_individuals):
                     if leg_index != DISABLED_LEG:

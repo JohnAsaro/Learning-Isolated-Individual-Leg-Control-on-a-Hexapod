@@ -87,14 +87,22 @@ motor_names =  ["RAC", "RAF", "RAT",
                "LPC", "LPF", "LPT"]
 
 motors = [robot.getDevice(name) for name in motor_names]
-for motor in motors:
-    motor.setPosition(0.0)
+
+init_positions = [0.699903958534031, 0.7874305232509808, -2.299885916546561,
+                 -0.7001514218999718, 0.7861381796996287, -2.299962950200891,
+                 0.0003427591794476062, 0.7861387560413399, -2.299951670216532,
+                -0.00015088237499079072, 0.7861387490342996, -2.299951771152082,
+                -0.699818778125061, 0.7861520889739678, -2.2999896140615927,
+                0.6995872274087394, 0.7874096205527307, -2.3000106220204892]
+
+for motor, init_pos in zip(motors, init_positions):
+    #motor.setPosition(0.0)
+    motor.setPosition(init_pos)
 
 
 # Set initial position and rotation for reset
 initial_position = [6.160960988497287, 24.08646487667829, 61.3591783745818]  # Hardcoded position [x, y, z]
 initial_rotation = [0.03125814128046004, -0.03913732036488227, 0.998744811630252, 1.3035737695105172]  # Hardcoded rotation [axis_x, axis_y, axis_z, angle]
-
 
 
 root = robot.getRoot()
@@ -121,8 +129,9 @@ def clamp(value, min_value, max_value):
     
 # Reset robot to initial state
 def reset_robot():
-    for motor in motors:
+    for motor, init_pos in zip(motors, init_positions):
         motor.setPosition(0.0)
+        #motor.setPosition(init_pos)
     translation_field.setSFVec3f(initial_position)
     rotation_field.setSFRotation(initial_rotation)
     for _ in range(10):
@@ -131,8 +140,9 @@ def reset_robot():
 # Evaluate one leg while other legs use the best individuals
 def evaluate_leg(leg_index, individual, best_individuals):
     EVAL_TOTAL = 0
-        
+    best_individuals = best_overall
     for _ in range(NUM_EVALS): # Evaluate this individual a number of times
+        
         reset_robot()
         start_time = robot.getTime()
         max_distance, height_sum, height_samples = 0.0, 0.0, 0
@@ -146,7 +156,7 @@ def evaluate_leg(leg_index, individual, best_individuals):
             time = robot.getTime()
             for i in range(NUM_LEGS):
                 if i != DISABLED_LEG:
-                    leg_params = individual if i == leg_index else best_individuals[i] # For this leg evaluate the individual, and deafult all other legs to their best individuals
+                    leg_params = individual if i == -1 else best_individuals[i] # For this leg evaluate the individual, and deafult all other legs to their best individuals
                     for j in range(LEG_PARAMS):
                         position = (leg_params["amplitude"][j] *
                                     math.sin(2.0 * math.pi * f * time + leg_params["phase"][j]) +
