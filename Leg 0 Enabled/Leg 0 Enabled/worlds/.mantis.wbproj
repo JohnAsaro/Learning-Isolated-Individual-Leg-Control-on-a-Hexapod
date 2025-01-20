@@ -5,5 +5,5 @@ sceneTreePerspectives: 000000ff000000010000000300000026000000c0000000fa010000000
 maximizedDockId: -1
 centralWidgetVisible: 1
 orthographicViewHeight: 1
-textFiles: 1 "protos/Mantis.proto" "controllers/leg_0_enabled/leg_0_enabled.py"
+textFiles: 1 "C:/Users/johnn/OneDrive/Desktop/Coding Projects/WeBotsMantis/Evolving Mantis Gait GA/Leg 0 Enabled/Leg 0 Enabled/protos/Mantis.proto" "C:/Users/johnn/OneDrive/Desktop/Coding Projects/WeBotsMantis/Evolving Mantis Gait GA/Leg 0 Enabled/Leg 0 Enabled/controllers/leg_0_enabled/leg_0_enabled.py"
 consoles: Console:All:All

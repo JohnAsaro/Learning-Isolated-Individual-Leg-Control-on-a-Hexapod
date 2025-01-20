@@ -140,7 +140,7 @@ def evaluate_leg(leg_index, individual, best_individuals):
     
         if leg_index != ENABLED_LEG:
             return
-    
+        
         while robot.getTime() - start_time < 20.0:
             time = robot.getTime()
             for i in range(NUM_LEGS):
