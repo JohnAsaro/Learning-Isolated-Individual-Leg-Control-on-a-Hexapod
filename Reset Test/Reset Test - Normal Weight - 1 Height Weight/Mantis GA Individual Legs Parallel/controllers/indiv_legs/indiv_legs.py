@@ -145,7 +145,7 @@ def evaluate(individuals, individual_index):
     EVAL_TOTALS = [0.0] * NUM_LEGS  # Initialize eval totals for averaging
 
     LAST_LEG = 5 # We calculate fitness based on the distance the robot is at once the last leg has been evaluated
-    
+        
     if DISABLED_LEG == 5:
         LAST_LEG = 4
 

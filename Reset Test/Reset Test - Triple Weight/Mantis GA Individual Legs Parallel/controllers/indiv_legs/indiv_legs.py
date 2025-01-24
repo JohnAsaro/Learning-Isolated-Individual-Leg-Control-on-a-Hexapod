@@ -148,7 +148,7 @@ def evaluate(individuals, individual_index):
     
     if DISABLED_LEG == 5:
         LAST_LEG = 4
-
+        
     for _ in range(NUM_EVALS):  # Evaluate 3 times
         reset_robot()
         start_time = robot.getTime()

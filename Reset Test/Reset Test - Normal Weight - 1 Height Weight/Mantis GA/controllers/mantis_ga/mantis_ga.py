@@ -137,6 +137,7 @@ def reset_robot():
 # Evaluate fitness of an individual
 def evaluate(individual):
     EVAL_TOTAL = 0
+   
     for _ in range(NUM_EVALS): # Evaluate this individual a number of times
         reset_robot()
         start_time = robot.getTime()
@@ -180,7 +181,7 @@ def evaluate(individual):
                         if debug_mode:
                             print(f"Third joint (knee joint) position, after clamp: {position}") # Knee joint after clamp
                     motors[i].setPosition(position)
-    
+                    
             robot.step(TIME_STEP)
             current_pos = gps.getValues()
             distance = math.sqrt((current_pos[0] - initial_pos[0]) ** 2 + (current_pos[2] - initial_pos[2]) ** 2)
