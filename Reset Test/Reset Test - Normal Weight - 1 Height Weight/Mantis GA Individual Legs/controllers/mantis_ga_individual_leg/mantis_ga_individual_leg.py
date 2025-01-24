@@ -130,8 +130,8 @@ def clamp(value, min_value, max_value):
 # Reset robot to initial state
 def reset_robot():
     for motor, init_pos in zip(motors, init_positions):
-        motor.setPosition(0.0)
-        #motor.setPosition(init_pos)
+        #motor.setPosition(0.0)
+        motor.setPosition(init_pos)
     translation_field.setSFVec3f(initial_position)
     rotation_field.setSFRotation(initial_rotation)
     for _ in range(10):
@@ -140,7 +140,7 @@ def reset_robot():
 # Evaluate one leg while other legs use the best individuals
 def evaluate_leg(leg_index, individual, best_individuals):
     EVAL_TOTAL = 0
-    best_individuals = best_overall
+
     for _ in range(NUM_EVALS): # Evaluate this individual a number of times
         
         reset_robot()
@@ -151,12 +151,12 @@ def evaluate_leg(leg_index, individual, best_individuals):
     
         if leg_index == DISABLED_LEG:
             return
-    
+
         while robot.getTime() - start_time < 20.0:
             time = robot.getTime()
             for i in range(NUM_LEGS):
                 if i != DISABLED_LEG:
-                    leg_params = individual if i == -1 else best_individuals[i] # For this leg evaluate the individual, and deafult all other legs to their best individuals
+                    leg_params = individual if i == leg_index else best_individuals[i] # For this leg evaluate the individual, and deafult all other legs to their best individuals
                     for j in range(LEG_PARAMS):
                         position = (leg_params["amplitude"][j] *
                                     math.sin(2.0 * math.pi * f * time + leg_params["phase"][j]) +

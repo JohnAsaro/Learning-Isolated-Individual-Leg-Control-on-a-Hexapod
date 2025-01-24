@@ -136,6 +136,9 @@ def reset_robot():
 
 # Evaluate fitness of an individual
 def evaluate(individual):
+
+    individual = best_overall
+
     EVAL_TOTAL = 0
     for _ in range(NUM_EVALS): # Evaluate this individual a number of times
         reset_robot()

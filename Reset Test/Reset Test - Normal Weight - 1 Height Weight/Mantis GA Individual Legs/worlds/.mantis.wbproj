@@ -6,5 +6,5 @@ maximizedDockId: -1
 centralWidgetVisible: 1
 renderingMode: PLAIN
 orthographicViewHeight: 1
-textFiles: 1 "controllers/mantis_ga_individual_leg/mantis_ga_individual_leg.py" "protos/Mantis.proto"
+textFiles: 1 "protos/Mantis.proto" "controllers/mantis_ga_individual_leg/mantis_ga_individual_leg.py"
 consoles: Console:All:All
