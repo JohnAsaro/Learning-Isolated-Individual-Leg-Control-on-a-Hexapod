@@ -20,7 +20,7 @@ PARAMS = 18
 POPULATION_SIZE = 50
 MUTATION_RATE = 0.1
 TIME_STEP = 32
-HEIGHT_WEIGHT = 1.0
+HEIGHT_WEIGHT = 0.5
 NUM_EVALS = 1 # Evaluate any given individual 3 times
 
 # Base joint range of motion
@@ -34,6 +34,9 @@ MIN_FOWARD_BEND_SHOULDER = math.radians(-90)
 # Knee range of motion
 MAX_FORWARD_BEND_KNEE = math.radians(-20)
 MIN_FORWARD_BEND_KNEE = math.radians(-120)
+
+# Limit range of motion to + or - this many degrees
+LIMIT_ROM = 10
 
 # Initialize Supervisor and Devices
 robot = Supervisor()
@@ -137,19 +140,21 @@ def reset_robot():
 # Evaluate fitness of an individual
 def evaluate(individual):
     EVAL_TOTAL = 0
-   
+
     for _ in range(NUM_EVALS): # Evaluate this individual a number of times
         reset_robot()
+        last_positions = {i: init_positions[i] for i in range(PARAMS)}  # Initialize last positions for each motor
         start_time = robot.getTime()
         max_distance, height_sum, height_samples = 0.0, 0.0, 0
         initial_pos = gps.getValues()
         f = 0.5  # Gait frequency
-    
+
         # Calculate the range of indices for the disabled leg
         disabled_leg_start = DISABLED_LEG * 3
         disabled_leg_end = disabled_leg_start + 3
         
         while robot.getTime() - start_time < 20.0:
+        
             time = robot.getTime()
             for i in range(PARAMS):
                 if disabled_leg_start <= i < disabled_leg_end: # Skip disabled leg
@@ -162,6 +167,10 @@ def evaluate(individual):
                 else:
                     position = (individual["amplitude"][i] * math.sin(2.0 * math.pi * f * time + individual["phase"][i])
                             + individual["offset"][i])
+                
+                    # Clamp the position change to +/- LIMIT_ROM degrees, as motors can only move so much                    
+                    position = clamp(position, last_positions[i] - math.radians(LIMIT_ROM), last_positions[i] + math.radians(LIMIT_ROM))
+                                        
                     if i % 3 == 0:
                         if debug_mode:
                             print(f"First joint (base joint) position, before clamp: {position}") # Print position of base joint
@@ -180,8 +189,10 @@ def evaluate(individual):
                         position = clamp(position, MIN_FORWARD_BEND_KNEE, MAX_FORWARD_BEND_KNEE)
                         if debug_mode:
                             print(f"Third joint (knee joint) position, after clamp: {position}") # Knee joint after clamp
-                    motors[i].setPosition(position)
                     
+                    last_positions[i] = position # Save last position to limit range of motion        
+                    motors[i].setPosition(position)
+            
             robot.step(TIME_STEP)
             current_pos = gps.getValues()
             distance = math.sqrt((current_pos[0] - initial_pos[0]) ** 2 + (current_pos[2] - initial_pos[2]) ** 2)
