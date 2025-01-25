@@ -140,7 +140,7 @@ def reset_robot():
 # Evaluate fitness of an individual
 def evaluate(individual):
     EVAL_TOTAL = 0
-
+    
     for _ in range(NUM_EVALS): # Evaluate this individual a number of times
         reset_robot()
         last_positions = {i: init_positions[i] for i in range(PARAMS)}  # Initialize last positions for each motor

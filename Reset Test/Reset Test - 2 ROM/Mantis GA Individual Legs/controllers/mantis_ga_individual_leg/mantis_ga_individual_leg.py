@@ -143,7 +143,7 @@ def reset_robot():
 # Evaluate one leg while other legs use the best individuals
 def evaluate_leg(leg_index, individual, best_individuals):
     EVAL_TOTAL = 0
-
+    
     for _ in range(NUM_EVALS): # Evaluate this individual a number of times
         reset_robot()
         last_positions = {i: init_positions[i] for i in range(NUM_LEGS * LEG_PARAMS)}  # Initialize last positions for each motor

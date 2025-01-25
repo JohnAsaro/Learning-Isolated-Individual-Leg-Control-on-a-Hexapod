@@ -13,9 +13,7 @@ import csv
 
 # Constants
 DISABLED_LEG = -1 # Disable this leg
-STUCK_BASE = math.radians(0)
-STUCK_SHOULDER = math.radians(0)
-STUCK_KNEE = math.radians(-30)
+
 
 NUM_LEGS = 6
 LEG_PARAMS = 3
@@ -197,11 +195,11 @@ def evaluate_leg(leg_index, individual, best_individuals):
                 else:
                     for j in range(LEG_PARAMS):
                         if j == 0:
-                            motors[i * 3 + j].setPosition(STUCK_BASE)            
+                            motors[i * 3 + j].setPosition(init_positions[i * 3 + j])            
                         if j == 1:
-                            motors[i * 3 + j].setPosition(STUCK_SHOULDER)            
+                            motors[i * 3 + j].setPosition(init_positions[i * 3 + j])            
                         if j == 2:
-                            motors[i * 3 + j].setPosition(STUCK_KNEE)
+                            motors[i * 3 + j].setPosition(init_positions[i * 3 + j])
                      
             robot.step(TIME_STEP)
             current_pos = gps.getValues()

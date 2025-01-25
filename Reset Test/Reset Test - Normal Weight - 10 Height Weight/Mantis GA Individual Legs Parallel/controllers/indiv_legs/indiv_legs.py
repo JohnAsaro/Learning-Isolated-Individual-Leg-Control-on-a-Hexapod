@@ -142,19 +142,15 @@ def reset_robot():
 
 # Evaluate each leg individually in parallel
 def evaluate(individuals, individual_index):
-    EVAL_TOTALS = [0.0] * NUM_LEGS  # Initialize eval totals for averaging
-
-    LAST_LEG = 5 # We calculate fitness based on the distance the robot is at once the last leg has been evaluated
+    EVAL_TOTAL = 0  # Initialize eval total for averaging
     
-    if DISABLED_LEG == 5:
-        LAST_LEG = 4
-
-    for _ in range(NUM_EVALS):  # Evaluate 3 times
+    for _ in range(NUM_EVALS):  # Evaluate NUM_EVALS times
         reset_robot()
         start_time = robot.getTime()
         max_distance, height_sum, height_samples = 0.0, 0.0, 0
         initial_pos = gps.getValues()
         f = 0.5  # Gait frequency
+        THIS_EVAL = 0
         
         while robot.getTime() - start_time < 20.0:
             time = robot.getTime()
@@ -183,6 +179,7 @@ def evaluate(individuals, individual_index):
                             position = clamp(position, MIN_FORWARD_BEND_KNEE, MAX_FORWARD_BEND_KNEE)
                             if debug_mode:
                                 print(f"Third joint (knee joint) position, after clamp: {position}") # Knee joint after clamp
+                      
                         motors[i * 3 + j].setPosition(position)
                     else:
                         if j == 0:
@@ -192,29 +189,22 @@ def evaluate(individuals, individual_index):
                         if j == 2:
                             motors[i * 3 + j].setPosition(STUCK_KNEE)
 
-                robot.step(TIME_STEP)
-                current_pos = gps.getValues()
-                distance = math.sqrt((current_pos[0] - initial_pos[0]) ** 2 + (current_pos[2] - initial_pos[2]) ** 2)
-                max_distance = max(max_distance, distance)
-                height_sum += current_pos[1]
-                height_samples += 1
-        
-                avg_height = height_sum / height_samples if height_samples > 0 else 0.0
+            robot.step(TIME_STEP)
+            current_pos = gps.getValues()
+            distance = math.sqrt((current_pos[0] - initial_pos[0]) ** 2 + (current_pos[2] - initial_pos[2]) ** 2)
+            max_distance = max(max_distance, distance)
+            height_sum += current_pos[1]
+            height_samples += 1
                 
-                if i == LAST_LEG:
-                    for k in range(NUM_LEGS):
-                        if k != DISABLED_LEG:
-                            individuals[k]["fitness"] = max_distance + avg_height * HEIGHT_WEIGHT
-                        else: 
-                            individuals[k]["fitness"] = 0.0 # Disabled leg fitness = 0.0
-
-        for i in range(NUM_LEGS):
-            if i != DISABLED_LEG:
-                EVAL_TOTALS[i] += individuals[i]["fitness"]  # Accumulate final fitness for averaging
+        avg_height = height_sum / height_samples if height_samples > 0 else 0.0
+        THIS_EVAL = max_distance + avg_height * HEIGHT_WEIGHT
+        EVAL_TOTAL += THIS_EVAL
+                
 
     for i in range(NUM_LEGS):
         # Calculate average fitness
-        individuals[i]["fitness"] = EVAL_TOTALS[i] / NUM_EVALS
+        if i != DISABLED_LEG:
+            individuals[i]["fitness"] = EVAL_TOTAL / NUM_EVALS
 
         # Print all info if debug mode on
         if print_fitness and i != DISABLED_LEG:

@@ -13,17 +13,15 @@ import csv
 
 # Constants
 DISABLED_LEG = 0 # Disable this leg
-STUCK_BASE = math.radians(0)
-STUCK_SHOULDER = math.radians(0)
-STUCK_KNEE = math.radians(-30)
+
 
 NUM_LEGS = 6
 LEG_PARAMS = 3
 POPULATION_SIZE = 50
 MUTATION_RATE = 0.1
 TIME_STEP = 32
-HEIGHT_WEIGHT = 0.2
-NUM_EVALS = 3 # Evaluate a given individual this many times
+HEIGHT_WEIGHT = 0.5
+NUM_EVALS = 1 # Evaluate a given individual this many times
 
 # Base joint range of motion
 MAX_FOWARD_BEND_BASE = math.radians(90)
@@ -36,6 +34,9 @@ MIN_FOWARD_BEND_SHOULDER = math.radians(-90)
 # Knee range of motion
 MAX_FORWARD_BEND_KNEE = math.radians(-20)
 MIN_FORWARD_BEND_KNEE = math.radians(-120)
+
+# Limit range of motion to + or - this many degrees
+LIMIT_ROM = 5
 
 # Initialize Supervisor and Devices
 robot = Supervisor()
@@ -87,14 +88,22 @@ motor_names =  ["RAC", "RAF", "RAT",
                "LPC", "LPF", "LPT"]
 
 motors = [robot.getDevice(name) for name in motor_names]
-for motor in motors:
-    motor.setPosition(0.0)
+
+init_positions = [0.699903958534031, 0.7874305232509808, -2.299885916546561,
+                 -0.7001514218999718, 0.7861381796996287, -2.299962950200891,
+                 0.0003427591794476062, 0.7861387560413399, -2.299951670216532,
+                -0.00015088237499079072, 0.7861387490342996, -2.299951771152082,
+                -0.699818778125061, 0.7861520889739678, -2.2999896140615927,
+                0.6995872274087394, 0.7874096205527307, -2.3000106220204892]
+
+for motor, init_pos in zip(motors, init_positions):
+    #motor.setPosition(0.0)
+    motor.setPosition(init_pos)
 
 
 # Set initial position and rotation for reset
 initial_position = [6.160960988497287, 24.08646487667829, 61.3591783745818]  # Hardcoded position [x, y, z]
 initial_rotation = [0.03125814128046004, -0.03913732036488227, 0.998744811630252, 1.3035737695105172]  # Hardcoded rotation [axis_x, axis_y, axis_z, angle]
-
 
 
 root = robot.getRoot()
@@ -121,8 +130,9 @@ def clamp(value, min_value, max_value):
     
 # Reset robot to initial state
 def reset_robot():
-    for motor in motors:
-        motor.setPosition(0.0)
+    for motor, init_pos in zip(motors, init_positions):
+        #motor.setPosition(0.0)
+        motor.setPosition(init_pos)
     translation_field.setSFVec3f(initial_position)
     rotation_field.setSFRotation(initial_rotation)
     for _ in range(10):
@@ -131,8 +141,10 @@ def reset_robot():
 # Evaluate one leg while other legs use the best individuals
 def evaluate_leg(leg_index, individual, best_individuals):
     EVAL_TOTAL = 0
+
     for _ in range(NUM_EVALS): # Evaluate this individual a number of times
         reset_robot()
+        last_positions = {i: init_positions[i] for i in range(NUM_LEGS * LEG_PARAMS)}  # Initialize last positions for each motor
         start_time = robot.getTime()
         max_distance, height_sum, height_samples = 0.0, 0.0, 0
         initial_pos = gps.getValues()
@@ -150,6 +162,15 @@ def evaluate_leg(leg_index, individual, best_individuals):
                         position = (leg_params["amplitude"][j] *
                                     math.sin(2.0 * math.pi * f * time + leg_params["phase"][j]) +
                                     leg_params["offset"][j])
+                        
+                        if debug_mode:
+                            print(f"Before we limit movement, we attempt to go from {last_positions[i * 3 + j]} to {position}")
+                        # Clamp the position change to +/- LIMIT_ROM degrees, as motors can only move so much
+                        position = clamp(position, last_positions[i * 3 + j] - math.radians(LIMIT_ROM), last_positions[i * 3 + j] + math.radians(LIMIT_ROM)) 
+                        if debug_mode:
+                            print(f"After we limit movement, we attempt to go from {last_positions[i * 3 + j]} to {position}")
+                        
+                       
                         if j == 0:
                             if debug_mode:
                                 print(f"First joint (base joint) position, before clamp: {position}") # Print position of base joint
@@ -168,15 +189,17 @@ def evaluate_leg(leg_index, individual, best_individuals):
                             position = clamp(position, MIN_FORWARD_BEND_KNEE, MAX_FORWARD_BEND_KNEE)
                             if debug_mode:
                                 print(f"Third joint (knee joint) position, after clamp: {position}") # Knee joint after clamp
+                     
+                        last_positions[i * 3 + j] = position
                         motors[i * 3 + j].setPosition(position)
                 else:
                     for j in range(LEG_PARAMS):
                         if j == 0:
-                            motors[i * 3 + j].setPosition(STUCK_BASE)            
+                            motors[i * 3 + j].setPosition(init_positions[i * 3 + j])            
                         if j == 1:
-                            motors[i * 3 + j].setPosition(STUCK_SHOULDER)            
+                            motors[i * 3 + j].setPosition(init_positions[i * 3 + j])            
                         if j == 2:
-                            motors[i * 3 + j].setPosition(STUCK_KNEE)
+                            motors[i * 3 + j].setPosition(init_positions[i * 3 + j])
                      
             robot.step(TIME_STEP)
             current_pos = gps.getValues()

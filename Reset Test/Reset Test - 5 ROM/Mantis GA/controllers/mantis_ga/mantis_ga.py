@@ -159,11 +159,11 @@ def evaluate(individual):
             for i in range(PARAMS):
                 if disabled_leg_start <= i < disabled_leg_end: # Skip disabled leg
                         if i % 3 == 0:
-                            motors[disabled_leg_start].setPosition(STUCK_BASE)            
+                            motors[disabled_leg_start].setPosition(init_positions[i])            
                         if i % 3 == 1:
-                            motors[disabled_leg_start+1].setPosition(STUCK_SHOULDER)            
+                            motors[disabled_leg_start+1].setPosition(init_positions[i])            
                         if i % 3 == 2:
-                            motors[disabled_leg_start+2].setPosition(STUCK_KNEE) 
+                            motors[disabled_leg_start+2].setPosition(init_positions[i]) 
                 else:
                     position = (individual["amplitude"][i] * math.sin(2.0 * math.pi * f * time + individual["phase"][i])
                             + individual["offset"][i])

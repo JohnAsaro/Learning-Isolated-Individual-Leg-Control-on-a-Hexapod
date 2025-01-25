@@ -13,9 +13,6 @@ import csv
 
 # Constants
 DISABLED_LEG = -1 # Disable this leg
-STUCK_BASE = math.radians(0)
-STUCK_SHOULDER = math.radians(0)
-STUCK_KNEE = math.radians(-30)
 
 NUM_LEGS = 6
 LEG_PARAMS = 3
@@ -193,21 +190,23 @@ def evaluate(individuals, individual_index):
                       
                         last_positions[i * 3 + j] = position
                         motors[i * 3 + j].setPosition(position)
-                    else:
-                        if j == 0:
-                            motors[i * 3 + j].setPosition(STUCK_BASE)            
-                        if j == 1:
-                            motors[i * 3 + j].setPosition(STUCK_SHOULDER)            
-                        if j == 2:
-                            motors[i * 3 + j].setPosition(STUCK_KNEE)
+                    else:                  
+                        for j in range(LEG_PARAMS):
+                            if j == 0:
+                                motors[i * 3 + j].setPosition(init_positions[i * 3 + j])            
+                            if j == 1:
+                                motors[i * 3 + j].setPosition(init_positions[i * 3 + j])            
+                            if j == 2:
+                                motors[i * 3 + j].setPosition(init_positions[i * 3 + j])
+                     
 
-                robot.step(TIME_STEP)
-                current_pos = gps.getValues()
-                distance = math.sqrt((current_pos[0] - initial_pos[0]) ** 2 + (current_pos[2] - initial_pos[2]) ** 2)
-                max_distance = max(max_distance, distance)
-                height_sum += current_pos[1]
-                height_samples += 1
-                    
+            robot.step(TIME_STEP)
+            current_pos = gps.getValues()
+            distance = math.sqrt((current_pos[0] - initial_pos[0]) ** 2 + (current_pos[2] - initial_pos[2]) ** 2)
+            max_distance = max(max_distance, distance)
+            height_sum += current_pos[1]
+            height_samples += 1
+                
         avg_height = height_sum / height_samples if height_samples > 0 else 0.0
         THIS_EVAL = max_distance + avg_height * HEIGHT_WEIGHT
         EVAL_TOTAL += THIS_EVAL
