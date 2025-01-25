@@ -13,7 +13,6 @@ import csv
 # Constants
 DISABLED_LEG = 0 # Disable this leg
 
-
 PARAMS = 18
 POPULATION_SIZE = 50
 MUTATION_RATE = 0.1
@@ -86,11 +85,24 @@ motor_names =  ["RAC", "RAF", "RAT",
                "LPC", "LPF", "LPT"]
 
 init_positions = [0.699903958534031, 0.7874305232509808, -2.299885916546561,
-                 -0.7001514218999718, 0.7861381796996287, -2.299962950200891,
+                -0.7001514218999718, 0.7861381796996287, -2.299962950200891,
                  0.0003427591794476062, 0.7861387560413399, -2.299951670216532,
                 -0.00015088237499079072, 0.7861387490342996, -2.299951771152082,
                 -0.699818778125061, 0.7861520889739678, -2.2999896140615927,
                 0.6995872274087394, 0.7874096205527307, -2.3000106220204892]
+                   
+if DISABLED_LEG == 0:
+    init_positions[2] = 0.999885916546561
+if DISABLED_LEG == 1:
+    init_positions[5] = 0.999962950200891
+if DISABLED_LEG == 2:
+    init_positions[8] = 0.999951670216532
+if DISABLED_LEG == 3:
+    init_positions[11] = 0.999951771152082
+if DISABLED_LEG == 4:
+    init_positions[14] = 0.9999896140615927
+if DISABLED_LEG == 5:
+    init_positions[17] = 1.0000106220204892
 
 motors = [robot.getDevice(name) for name in motor_names]
 
