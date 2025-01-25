@@ -1,1 +1,0 @@
-Individual leg parallel code was rewritten due to it undershooting fitness values
