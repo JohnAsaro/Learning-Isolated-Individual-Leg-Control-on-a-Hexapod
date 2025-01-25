@@ -165,8 +165,13 @@ def evaluate_leg(leg_index, individual, best_individuals):
                                     math.sin(2.0 * math.pi * f * time + leg_params["phase"][j]) +
                                     leg_params["offset"][j])
                         
-                        # Clamp the position change to +/- LIMIT_ROM degrees, as motors can only move so much                    
-                        position = clamp(position, last_positions[i*3 + j] - math.radians(LIMIT_ROM), last_positions[i*3 + j] + math.radians(LIMIT_ROM)) 
+                        if debug_mode:
+                            print(f"Before we limit movement, we attempt to go from {last_positions[i * 3 + j]} to {position}")
+                        # Clamp the position change to +/- LIMIT_ROM degrees, as motors can only move so much
+                        position = clamp(position, last_positions[i * 3 + j] - math.radians(LIMIT_ROM), last_positions[i * 3 + j] + math.radians(LIMIT_ROM)) 
+                        if debug_mode:
+                            print(f"After we limit movement, we attempt to go from {last_positions[i * 3 + j]} to {position}")
+                        
                        
                         if j == 0:
                             if debug_mode:
@@ -186,6 +191,7 @@ def evaluate_leg(leg_index, individual, best_individuals):
                             position = clamp(position, MIN_FORWARD_BEND_KNEE, MAX_FORWARD_BEND_KNEE)
                             if debug_mode:
                                 print(f"Third joint (knee joint) position, after clamp: {position}") # Knee joint after clamp
+                     
                         last_positions[i * 3 + j] = position
                         motors[i * 3 + j].setPosition(position)
                 else:
