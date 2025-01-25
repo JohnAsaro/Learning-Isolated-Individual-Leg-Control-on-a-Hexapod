@@ -168,9 +168,13 @@ def evaluate(individual):
                     position = (individual["amplitude"][i] * math.sin(2.0 * math.pi * f * time + individual["phase"][i])
                             + individual["offset"][i])
                 
+                    if debug_mode:
+                        print(f"Before we limit movement, we attempt to go from {last_positions[i]} to {position}")
                     # Clamp the position change to +/- LIMIT_ROM degrees, as motors can only move so much                    
                     position = clamp(position, last_positions[i] - math.radians(LIMIT_ROM), last_positions[i] + math.radians(LIMIT_ROM))
-                                        
+                    if debug_mode:
+                        print(f"After we limit movement, we attempt to go from {last_positions[i]} to {position}")
+                        
                     if i % 3 == 0:
                         if debug_mode:
                             print(f"First joint (base joint) position, before clamp: {position}") # Print position of base joint
