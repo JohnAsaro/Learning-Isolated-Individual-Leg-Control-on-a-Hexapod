@@ -1,0 +1,8 @@
+Project needs to go on hiatus for a bit until lab computers are open.
+
+Next steps:
+
+1 - Make the coop coevolution models log each individual generated
+2 - Make the graphs track actual amount of individuals generated, so we can accurately compare coop coevolution to the other models
+3 - Replicate the results on 5-10 runs so we know they werent a fluke, implementing a system to make this run on multiple systems in parallel could help with this
+
