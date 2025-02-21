@@ -14,7 +14,6 @@ import csv
 # Constants
 DISABLED_LEG = 0 # Disable this leg
 
-
 NUM_LEGS = 6
 LEG_PARAMS = 3
 POPULATION_SIZE = 50
@@ -294,12 +293,13 @@ def get_next_best_fitnesses_file():
     return (os.path.join(base_directory, f"{base_name}{n1}{ext}")), n1
 
 # Save state to file
-def save_state(filename, populations, best_individuals, best_overall, generation):
+def save_state(filename, populations, best_individuals, best_overall, generation, effective_generation):
     with open(filename, 'wb') as file:
         pickle.dump({'populations': populations, 
                      'best_individuals': best_individuals, 
                      'best_overall': best_overall,
-                     'generation': generation}, file)
+                     'generation': generation,
+                     'effective_generation': effective_generation}, file)
     print(f"State saved to {filename}")
  
 # Main Evolution Loop
@@ -360,7 +360,7 @@ def load_state(filename):
     with open(filename, 'rb') as file:
         state = pickle.load(file)
     print(f"State loaded from {filename}")
-    return state['populations'], state['best_individuals'], state['best_overall'], state['generation']
+    return state['populations'], state['best_individuals'], state['best_overall'], state['generation'], state['effective_generation']
 
 best_fitnesses_file, n1 = get_next_best_fitnesses_file()
 gens_per_run = 1 # 1 generations per run to avoid deterioration 
@@ -371,7 +371,7 @@ load_checkpoint, n2 = get_latest_checkpoint()
 # Initialize state
 if load_checkpoint:
     try:
-        populations, best_individuals, best_overall, generation = load_state(load_checkpoint)
+        populations, best_individuals, best_overall, generation, effective_generation = load_state(load_checkpoint)
         generation = generation + 1
         print(f"Loaded state from {load_checkpoint}: Resuming from generation {generation}")
     except FileNotFoundError:
@@ -385,6 +385,7 @@ else:
     best_individuals = [create_individual() for _ in range(NUM_LEGS)] # Initial random best individuals (So robot can walk)
     best_overall = best_individuals
     generation = 0  # First gen
+    effective_generation = -1 # Effective generation, since we are are doing a full generation for each leg, this counts the amount of generations done on each leg combined
 
 checkpoint_file = os.path.join(saves_directory, f"run_{n2+1}_generation{generation}") # Checkpoint organized by run and generation
 
@@ -403,7 +404,7 @@ if not os.path.exists(csv_file_name):
     with open(csv_file_name, mode='w', newline='') as csv_file:
         csv_writer = csv.writer(csv_file)
         # Write the header row
-        csv_writer.writerow(['Run', 'Generation', 'Leg Index', 'Individual Index',
+        csv_writer.writerow(['Run', 'Generation', 'Effective Generation', 'Leg Index', 'Individual Index',
                              'Fitness', 'Amplitude', 'Phase', 'Offset'])
 
 with open(csv_file_name, mode='a', newline='') as csv_file:
@@ -414,6 +415,8 @@ with open(csv_file_name, mode='a', newline='') as csv_file:
         print(f"Generation {generation}")
         
         for leg_index in range(NUM_LEGS):
+            effective_generation += 1
+            print(f"Effective Generation {effective_generation}")
             
             if leg_index != DISABLED_LEG:
                 print(f"Evaluating leg {leg_index} for generation {generation}")
@@ -429,6 +432,7 @@ with open(csv_file_name, mode='a', newline='') as csv_file:
                     csv_writer.writerow([
                         n2+1,  # Run number
                         generation,  # Current generation
+                        effective_generation,  # Effective generation
                         leg_index,  # Leg index
                         individual_index,  # Individual index
                         individual['fitness'],  # Fitness
@@ -436,7 +440,7 @@ with open(csv_file_name, mode='a', newline='') as csv_file:
                         individual['phase'],  # Phase list
                         individual['offset']  # Offset list
                     ])
-                        
+
                 # Update the best individual for this leg
                 if leg_index != DISABLED_LEG:
                     best_individuals[leg_index] = max(populations[leg_index], key=lambda ind: ind["fitness"])
@@ -471,7 +475,7 @@ with open(csv_file_name, mode='a', newline='') as csv_file:
                                    f"-------------------------------------\n")
                         file.flush()
        
-        save_state(checkpoint_file, populations, best_individuals, best_overall, generation) # Make a checkpoint
+        save_state(checkpoint_file, populations, best_individuals, best_overall, generation, effective_generation) # Make a checkpoint
         
         generation += 1
         gens_per_run = gens_per_run - 1
