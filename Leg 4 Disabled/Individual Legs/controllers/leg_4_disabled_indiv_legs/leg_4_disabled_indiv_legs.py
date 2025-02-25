@@ -415,8 +415,9 @@ with open(csv_file_name, mode='a', newline='') as csv_file:
         print(f"Generation {generation}")
         
         for leg_index in range(NUM_LEGS):
-            effective_generation += 1
-            print(f"Effective Generation {effective_generation}")
+            if leg_index != DISABLED_LEG:
+                effective_generation += 1
+                print(f"Effective Generation {effective_generation}")
             
             if leg_index != DISABLED_LEG:
                 print(f"Evaluating leg {leg_index} for generation {generation}")
