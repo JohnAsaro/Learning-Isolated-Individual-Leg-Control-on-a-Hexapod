@@ -9,7 +9,7 @@ import random
 import pickle
 import os
 import csv
-
+import copy
 
 # Constants
 DISABLED_LEG = 5 # Disable this leg
@@ -225,7 +225,7 @@ def evaluate_leg(leg_index, individual, best_individuals):
         EVAL_TOTAL = THIS_EVAL + EVAL_TOTAL
 
     individual["fitness"] = EVAL_TOTAL/NUM_EVALS # Average of total evals
- 
+
     # Print all info if debug mode on
     if print_fitness:
         print("\n--- Info for Leg", leg_index, "---")
@@ -413,7 +413,7 @@ with open(csv_file_name, mode='a', newline='') as csv_file:
 
     while gens_per_run > 0:
         print(f"Generation {generation}")
-        
+
         for leg_index in range(NUM_LEGS):
             if leg_index != DISABLED_LEG:
                 effective_generation += 1
@@ -452,7 +452,7 @@ with open(csv_file_name, mode='a', newline='') as csv_file:
         for leg_index in range(NUM_LEGS):
             if leg_index != DISABLED_LEG:
                 populations[leg_index] = evolve_population(populations[leg_index])
-
+   
             # Write to evolution file and checkporint
             with open(best_fitnesses_file, "w") as file:
                 for leg_index, best in enumerate(best_individuals):
@@ -475,12 +475,17 @@ with open(csv_file_name, mode='a', newline='') as csv_file:
                                    f"Offset: {best_overall[leg_index]['offset']}\n"
                                    f"-------------------------------------\n")
                         file.flush()
-       
+
+        best_overall = copy.deepcopy(best_overall) # Save deep copy of best overall
+        best_individuals = copy.deepcopy(best_individuals) # Save deep copy of best individuals
+
+        for leg_index, population in enumerate(populations):
+            for individual_index, individual in enumerate(population):
+                individual['fitness'] = 0.0
+               
         save_state(checkpoint_file, populations, best_individuals, best_overall, generation, effective_generation) # Make a checkpoint
         
         generation += 1
         gens_per_run = gens_per_run - 1
 
-# Reset the environment after completing the run
-print("Resetting Webots environment...")
 robot.worldReload()

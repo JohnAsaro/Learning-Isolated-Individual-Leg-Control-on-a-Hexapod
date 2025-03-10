@@ -9,6 +9,7 @@ import random
 import pickle
 import os
 import csv
+import copy
 
 
 # Constants
@@ -156,7 +157,7 @@ def reset_robot():
 # Evaluate each leg individually in parallel
 def evaluate(individuals, individual_index):
     EVAL_TOTAL = 0  # Initialize eval total for averaging
-    
+
     for _ in range(NUM_EVALS):  # Evaluate NUM_EVALS times
         reset_robot()
         last_positions = {i: init_positions[i] for i in range(NUM_LEGS * LEG_PARAMS)}  # Initialize last positions for each motor
@@ -420,7 +421,6 @@ with open(csv_file_name, mode='a', newline='') as csv_file:
            
         for individual_index in range(POPULATION_SIZE):
             individuals_to_evaluate = [populations[leg_index][individual_index] for leg_index in range(NUM_LEGS)]
-            
             # Evaluate individuals
             if print_fitness == True:
                 print(f"Evaluating individuals in set {individual_index} in generation {generation}")
@@ -441,13 +441,12 @@ with open(csv_file_name, mode='a', newline='') as csv_file:
                         individual['offset']  # Offset list
                     ])
 
-
                 # Update the best individual for this leg
                 if leg_index != DISABLED_LEG:
-                    best_individuals[leg_index] = max(populations[leg_index], key=lambda ind: ind["fitness"])
+                    best_individuals[leg_index] = max(populations[leg_index], key=lambda ind: ind['fitness'])
                     if best_individuals[leg_index]['fitness'] > best_overall[leg_index]['fitness']:
-                        best_overall[leg_index] = best_individuals[leg_index]    
-
+                        best_overall[leg_index] = best_individuals[leg_index]
+                    
         # Evolve each population
         for leg_index in range(NUM_LEGS):
             if leg_index != DISABLED_LEG:
@@ -477,12 +476,15 @@ with open(csv_file_name, mode='a', newline='') as csv_file:
                                    f"Offset: {best_overall[leg_index]['offset']}\n"
                                    f"-------------------------------------\n")
                         file.flush()
-       
+
+        best_overall = copy.deepcopy(best_overall) # Save deep copy of best overall
+        for leg_index, population in enumerate(populations):
+            for individual_index, individual in enumerate(population):
+                individual['fitness'] = 0.0
+               
         save_state(checkpoint_file, populations, best_individuals, best_overall, generation) # Make a checkpoint
         
         generation += 1
         gens_per_run = gens_per_run - 1
 
-# Reset the environment after completing the run
-print("Resetting Webots environment...")
 robot.worldReload()

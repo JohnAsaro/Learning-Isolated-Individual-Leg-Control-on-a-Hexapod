@@ -9,6 +9,7 @@ import random
 import pickle
 import os
 import csv
+import copy
 
 # Constants
 DISABLED_LEG = 0 # Disable this leg
@@ -411,7 +412,6 @@ with open(csv_file_name, mode='a', newline='') as csv_file:
             if print_fitness == True:
                 print(f"Evaluating individual {i} in generation {generation}")
             evaluate(individual)
-
             # Log individual fitness/info to file
             csv_writer.writerow([
                 n2+1,  # Run number
@@ -423,10 +423,10 @@ with open(csv_file_name, mode='a', newline='') as csv_file:
                 individual['offset']  # Offset list
             ])
     
-            # Update the best individual for this generation
-            best_individual = max(population, key=lambda ind: ind["fitness"])
-            best_overall = max(best_individual, best_overall, key=lambda ind: ind["fitness"])
-            
+        # Update the best individual for this generation
+        best_individual = max(population, key=lambda ind: ind["fitness"])
+        best_overall = max(best_individual, best_overall, key=lambda ind: ind["fitness"])
+        
         # Evolve each population
         population = evolve_population(population)
         
@@ -457,6 +457,10 @@ with open(csv_file_name, mode='a', newline='') as csv_file:
             print(f"Offset: {best_individual['offset']}")
             print("------------------------------------------")
        
+        best_overall = copy.deepcopy(best_overall) # Save deep copy of best overall
+        for individual_index, individual in enumerate(population):
+            individual['fitness'] = 0.0
+    
         save_state(checkpoint_file, population, best_individual, best_overall, generation) # Make a checkpoint
         
         generation += 1
