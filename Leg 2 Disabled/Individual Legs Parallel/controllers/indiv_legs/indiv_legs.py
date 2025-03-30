@@ -20,7 +20,7 @@ LEG_PARAMS = 3
 POPULATION_SIZE = 50
 MUTATION_RATE = 0.1
 TIME_STEP = 32
-HEIGHT_WEIGHT = 0.5
+HEIGHT_WEIGHT = 0.2
 NUM_EVALS = 1 # Evaluate a given individual this many times
 
 # Base joint range of motion
@@ -216,9 +216,9 @@ def evaluate(individuals, individual_index):
 
             robot.step(TIME_STEP)
             current_pos = gps.getValues()
-            distance = math.sqrt((current_pos[0] - initial_pos[0]) ** 2 + (current_pos[2] - initial_pos[2]) ** 2)
+            distance = math.sqrt((current_pos[0] - initial_pos[0]) ** 2 + (current_pos[1] - initial_pos[1]) ** 2)
             max_distance = max(max_distance, distance)
-            height_sum += current_pos[1]
+            height_sum += current_pos[2]
             height_samples += 1
                 
         avg_height = height_sum / height_samples if height_samples > 0 else 0.0
