@@ -1,0 +1,2 @@
+Add collision detection with feet, then calculate static stability by drawing polygon between legs, this should replace height in your fitness functions.
+Collision detection can probably be done by modifying protos.
