@@ -86,6 +86,7 @@ motor_names =  ["RAC", "RAF", "RAT",
                "RPC", "RPF", "RPT",
                "LPC", "LPF", "LPT"]
 
+robot_feet = ["RAS", "LAS", "RMS", "LMS", "RPS", "LPS"]
 motors = [robot.getDevice(name) for name in motor_names]
 
 init_positions = [0.699903958534031, 0.7874305232509808, -2.299885916546561,

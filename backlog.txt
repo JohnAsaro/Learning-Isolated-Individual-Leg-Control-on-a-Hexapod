@@ -1,2 +1,4 @@
 Add collision detection with feet, then calculate static stability by drawing polygon between legs, this should replace height in your fitness functions.
-Collision detection can probably be done by modifying protos.
+
+So each foot motor already has a touch sensor, and you can add in gps's to that logic, so the logic can be like if > 3 feet on the ground, bad stability, else check gps pos of each, if we can draw a polygon that encloses the extension slot gps (located at the center of mass), you are stable.
+Take a sample at each timestep, 1 if stable else 0, average the score of stability and apply that as a multiplier to the fitness. I think thats a good way to do it. This polygon should just be on the xy axis. Also ignore this check on the first timestep, thats not really fair to the robot, just say its stable at the first timestep.

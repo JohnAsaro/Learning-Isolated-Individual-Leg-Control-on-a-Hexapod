@@ -86,6 +86,7 @@ motor_names =  ["RAC", "RAF", "RAT",
                "LMC", "LMF", "LMT", 
                "RPC", "RPF", "RPT",
                "LPC", "LPF", "LPT"]
+robot_feet = ["RAS", "LAS", "RMS", "LMS", "RPS", "LPS"]
 
 motors = [robot.getDevice(name) for name in motor_names]
 
