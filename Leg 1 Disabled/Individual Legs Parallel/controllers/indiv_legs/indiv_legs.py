@@ -328,7 +328,7 @@ def get_latest_checkpoint():
     saves_directory = "saves"  # Define the directory where saves are stored
     base_name = "run_"
     gen_base = "_generation"
-    ext = ""  # No extension since your checkpoints don't have one
+    ext = ""  # No extension since checkpoints don't have one
     latest_n = 0
     latest_m = 0
     latest_checkpoint = None
