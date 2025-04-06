@@ -18,7 +18,6 @@ PARAMS = 18
 POPULATION_SIZE = 50
 MUTATION_RATE = 0.1
 TIME_STEP = 32
-HEIGHT_WEIGHT = 0.2
 NUM_EVALS = 1 # Evaluate any given individual 3 times
 
 # Base joint range of motion

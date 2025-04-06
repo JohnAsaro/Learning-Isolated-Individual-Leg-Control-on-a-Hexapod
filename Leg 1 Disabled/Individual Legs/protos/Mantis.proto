@@ -14,9 +14,16 @@ PROTO Mantis [
   field MFString   controllerArgs  []          # Is `Robot.controllerArgs`.
   field SFString   window          "<generic>" # Is `Robot.window`.
   field SFString   customData      ""          # Is `Robot.customData`.
-  field SFBool     supervisor      FALSE       # Is `Robot.supervisor`.
+  field SFBool     supervisor      TRUE       # Is `Robot.supervisor`.
   field SFBool     synchronization TRUE        # Is `Robot.synchronization`.
+  field SFBool     selfCollision   TRUE        # Is `Robot.selfCollision`. 
   field MFNode     extensionSlot   []          # Extends the robot with new nodes in the extension slot.
+  field MFNode     extensionSlotRAS  []       # GPS for leg 0         
+  field MFNode     extensionSlotLAS  []       # GPS for leg 1         
+  field MFNode     extensionSlotRMS  []       # GPS for leg 2         
+  field MFNode     extensionSlotLMS  []       # GPS for leg 3 
+  field MFNode     extensionSlotRPS  []       # GPS for leg 4 
+  field MFNode     extensionSlotLPS  []       # GPS for leg 5 
 ]
 {
   Robot {
@@ -28,6 +35,7 @@ PROTO Mantis [
     customData IS customData
     supervisor IS supervisor
     synchronization IS synchronization
+    selfCollision IS selfCollision
     name IS name
     children [
       Group {
@@ -332,10 +340,10 @@ PROTO Mantis [
                             0 0.501961 0 0.784314 0.588235 0 0.784314 0 0 0 0 0.784314
                           ]
                         }
-                        DEF FOOT_CONTACT TouchSensor {
+                        DEF FOOT_CONTACT_RPS TouchSensor {
                           translation 1.6 0 0
                           children [
-                            DEF FOOT_C Shape {
+                            DEF FOOT_C_RPS Shape {
                               appearance PBRAppearance {
                                 roughness 0.3
                               }
@@ -344,10 +352,13 @@ PROTO Mantis [
                                 subdivision 2
                               }
                             }
+                            Group {
+                                children IS extensionSlotRPS
+                             }
                           ]
                           name "RPS"
-                          boundingObject USE FOOT_C
-                          physics DEF FOOT_P Physics {
+                          boundingObject USE FOOT_C_RPS
+                          physics DEF FOOT_P_RPS Physics {
                             density -1
                             mass 1
                           }
@@ -526,15 +537,25 @@ PROTO Mantis [
                             0 0.501961 0 0.784314 0.588235 0 0.784314 0 0 0 0 0.784314
                           ]
                         }
-                        TouchSensor {
+                        DEF FOOT_CONTACT_RMS TouchSensor {
                           translation 1.6 0 0
-                          rotation 0 0 -1 0
                           children [
-                            USE FOOT_C
+                            DEF FOOT_C_RMS Shape {
+                              appearance PBRAppearance {
+                                roughness 0.3
+                              }
+                              geometry Sphere {
+                                radius 0.15
+                                subdivision 2
+                              }
+                            }
+                            Group {
+                                children IS extensionSlotRMS
+                             }
                           ]
                           name "RMS"
-                          boundingObject USE FOOT_C
-                          physics DEF FOOT_P Physics {
+                          boundingObject USE FOOT_C_RMS
+                          physics DEF FOOT_P_RMS Physics {
                             density -1
                             mass 1
                           }
@@ -685,14 +706,25 @@ PROTO Mantis [
                             0 0.501961 0 0.784314 0.588235 0 0.784314 0 0 0 0 0.784314
                           ]
                         }
-                        TouchSensor {
+                        DEF FOOT_CONTACT_RAS TouchSensor {
                           translation 1.6 0 0
                           children [
-                            USE FOOT_C
+                            DEF FOOT_C_RAS Shape {
+                              appearance PBRAppearance {
+                                roughness 0.3
+                              }
+                              geometry Sphere {
+                                radius 0.15
+                                subdivision 2
+                              }
+                            }
+                            Group {
+                                children IS extensionSlotRAS
+                             }
                           ]
                           name "RAS"
-                          boundingObject USE FOOT_C
-                          physics DEF FOOT_P Physics {
+                          boundingObject USE FOOT_C_RAS
+                          physics DEF FOOT_P_RAS Physics {
                             density -1
                             mass 1
                           }
@@ -843,14 +875,25 @@ PROTO Mantis [
                             0 0.501961 0 0.784314 0.784314 0 0.784314 0 0 0 0 0.784314
                           ]
                         }
-                        TouchSensor {
+                        DEF FOOT_CONTACT_LAS TouchSensor {
                           translation 1.6 0 0
                           children [
-                            USE FOOT_C
+                            DEF FOOT_C_LAS Shape {
+                              appearance PBRAppearance {
+                                roughness 0.3
+                              }
+                              geometry Sphere {
+                                radius 0.15
+                                subdivision 2
+                              }
+                            }
+                            Group {
+                                children IS extensionSlotLAS
+                             }
                           ]
                           name "LAS"
-                          boundingObject USE FOOT_C
-                          physics DEF FOOT_P Physics {
+                          boundingObject USE FOOT_C_LAS
+                          physics DEF FOOT_P_LAS Physics {
                             density -1
                             mass 1
                           }
@@ -1001,14 +1044,25 @@ PROTO Mantis [
                             0 0.501961 0 0.784314 0.588235 0 0.784314 0 0 0 0 0.784314
                           ]
                         }
-                        TouchSensor {
+                        DEF FOOT_CONTACT_LMS TouchSensor {
                           translation 1.6 0 0
                           children [
-                            USE FOOT_C
+                            DEF FOOT_C_LMS Shape {
+                              appearance PBRAppearance {
+                                roughness 0.3
+                              }
+                              geometry Sphere {
+                                radius 0.15
+                                subdivision 2
+                              }
+                            }
+                            Group {
+                                children IS extensionSlotLMS
+                             }
                           ]
                           name "LMS"
-                          boundingObject USE FOOT_C
-                          physics DEF FOOT_P Physics {
+                          boundingObject USE FOOT_C_LMS
+                          physics DEF FOOT_P_LMS Physics {
                             density -1
                             mass 1
                           }
@@ -1159,14 +1213,25 @@ PROTO Mantis [
                             0 0.501961 0 0.784314 0.588235 0 0.784314 0 0 0 0 0.784314
                           ]
                         }
-                        TouchSensor {
+                        DEF FOOT_CONTACT_LPS TouchSensor {
                           translation 1.6 0 0
                           children [
-                            USE FOOT_C
+                            DEF FOOT_C_LPS Shape {
+                              appearance PBRAppearance {
+                                roughness 0.3
+                              }
+                              geometry Sphere {
+                                radius 0.15
+                                subdivision 2
+                              }
+                            }
+                            Group {
+                                children IS extensionSlotLPS
+                             }
                           ]
                           name "LPS"
-                          boundingObject USE FOOT_C
-                          physics DEF FOOT_P Physics {
+                          boundingObject USE FOOT_C_LPS
+                          physics DEF FOOT_P_LPS Physics {
                             density -1
                             mass 1
                           }
