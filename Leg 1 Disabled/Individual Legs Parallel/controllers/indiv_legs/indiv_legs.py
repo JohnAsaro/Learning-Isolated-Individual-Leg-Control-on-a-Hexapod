@@ -3,14 +3,13 @@
 # Script will reset webots world after each run, this is to avoid deterioration of the physics in the webots environment
 
 import threading # To always be taking in keyboard I/O
-from controller import Robot, GPS, Supervisor, Keyboard
+from controller import Robot, GPS, Supervisor, Keyboard, TouchSensor
 import math
 import random
 import pickle
 import os
 import csv
 import copy
-
 
 # Constants
 DISABLED_LEG = 1 # Disable this leg
@@ -20,7 +19,6 @@ LEG_PARAMS = 3
 POPULATION_SIZE = 50
 MUTATION_RATE = 0.1
 TIME_STEP = 32
-HEIGHT_WEIGHT = 0.2
 NUM_EVALS = 1 # Evaluate a given individual this many times
 
 # Base joint range of motion
@@ -48,12 +46,14 @@ keyboard.enable(TIME_STEP)
 
 # Global debug flag
 debug_mode = False # Print info about motor positions in real time
-print_fitness = True # Print Amplitude, Phase, Offset, and Fitness info for each leg
+print_fitness = True # Print Amplitude, Phase, Offset, and Fitness info
+print_stability = False
 
 # Function to poll the keyboard in a separate thread
 def poll_keyboard():
     global debug_mode
     global print_fitness
+    global print_stability
     while True:
         key = keyboard.getKey()
         if key in [ord('Q'), ord('q')]:  # Toggle debug mode on 'Q' key press
@@ -68,6 +68,13 @@ def poll_keyboard():
             print("_______________________________________________________\n")
             print(f"Individual fitness print statements {'enabled' if debug_mode else 'disabled'}")
             print("_______________________________________________________\n")
+        if key in [ord('E'), ord('e')]:  # Toggle stability print statements on 'E' press
+            print_stability = not print_stability
+            print("\n")
+            print("_______________________________________________________\n")
+            print(f"Stability print statements {'enabled' if debug_mode else 'disabled'}")
+            print("_______________________________________________________\n")
+            
 
 # Start the keyboard polling thread
 keyboard_thread = threading.Thread(target=poll_keyboard, daemon=True)
@@ -86,9 +93,12 @@ motor_names =  ["RAC", "RAF", "RAT",
                "LMC", "LMF", "LMT", 
                "RPC", "RPF", "RPT",
                "LPC", "LPF", "LPT"]
-robot_feet = ["RAS", "LAS", "RMS", "LMS", "RPS", "LPS"]
 
-motors = [robot.getDevice(name) for name in motor_names]
+robot_feet = ["RAS", "LAS", "RMS", "LMS", "RPS", "LPS"]
+feet_positions = ["ras_gps", "las_gps", "rms_gps", "lms_gps", "rps_gps", "lps_gps"]
+for gps_pos in feet_positions:
+    foot_gps = robot.getDevice(gps_pos)
+    foot_gps.enable(TIME_STEP)
 
 init_positions = [0.699903958534031, 0.7874305232509808, -2.299885916546561,
                 -0.7001514218999718, 0.7861381796996287, -2.299962950200891,
@@ -96,6 +106,15 @@ init_positions = [0.699903958534031, 0.7874305232509808, -2.299885916546561,
                 -0.00015088237499079072, 0.7861387490342996, -2.299951771152082,
                 -0.699818778125061, 0.7861520889739678, -2.2999896140615927,
                 0.6995872274087394, 0.7874096205527307, -2.3000106220204892]
+
+touch_sensors = [] # Foot touch sensors
+
+for foot in robot_feet:
+    if robot_feet.index(foot) != DISABLED_LEG: # If not disabled leg get in the club
+        touch_sensors.append((robot.getDevice(foot), robot_feet.index(foot))) # Tuple of the device and its indexs
+        TouchSensor.enable(robot.getDevice(foot), 1)
+    else: # Otherwise turn off sensor
+        TouchSensor.disable(robot.getDevice(foot))
                    
 if DISABLED_LEG == 0:
     init_positions[2] = 0.999885916546561
@@ -155,6 +174,85 @@ def reset_robot():
     for _ in range(10):
         robot.step(TIME_STEP)
 
+
+def get_feet_touching_ground():
+    feet_touching_ground = []
+    for sensor in touch_sensors:
+        if TouchSensor.getValue(sensor[0]) > 0.0: # Almost works
+            gps_name = feet_positions[sensor[1]] # Name of the def used to track translation of this sensor
+            foot_gps = robot.getDevice(gps_name)
+            foot_position = foot_gps.getValues()
+            feet_touching_ground.append((sensor[1], foot_position))
+    return feet_touching_ground 
+    
+def convert_to_2d(com, leg_points): 
+    # Takes the 3d vector returned by the previous function and converts it to 2d, 
+    # purging each leg vector that has a z value higher than the center of mass,
+    # this is done to ensure that the center of mass is always above the legs 
+
+    com_x, com_y, com_z = com # Unpack the center of mass coordinates
+    leg_positions = [leg[1] for leg in leg_points] # Get the leg positions
+    leg_positions = [leg for leg in leg_positions if leg[2] < com_z] # Filter out legs above the COM
+
+    # Project leg points to the x-y plane
+    polygon_pts_2d = [(x, y) for x, y, z in leg_positions]
+
+    return (com_x, com_y), polygon_pts_2d
+
+def convex_hull(points): # Get the convex hull of the inputted set of points using Andrew's monotone chain convex hull algorithm
+
+    points = sorted(set(points)) # Sort the points lexicographically (tuples are compared lexicographically)
+
+    if len(points) <= 1: # Base case: if there are 0 or 1 points, the convex hull is the same as the input points
+        return points
+
+
+    def cross(o, a, b): # 2D cross product of OA and OB vectors, i.e. z-component of their 3D cross product
+        # Returns a positive value, if OAB makes a counter-clockwise turn,
+        # negative for clockwise turn, and zero if the points are collinear
+        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+
+    # Build lower hull 
+    lower = []
+    for p in points:
+        while len(lower) >= 2 and cross(lower[-2], lower[-1], p) <= 0:
+            lower.pop()
+        lower.append(p)
+
+    # Build upper hull
+    upper = []
+    for p in reversed(points):
+        while len(upper) >= 2 and cross(upper[-2], upper[-1], p) <= 0:
+            upper.pop()
+        upper.append(p)
+
+    # Concatenation of the lower and upper hulls gives the convex hull
+    # Last point of each list is omitted because it is repeated at the beginning of the other list
+    return lower[:-1] + upper[:-1]
+
+def is_statically_stable(polygon_pts, com): # Find if the center of mass is inside a polygon drawn between the point each leg touches the ground
+    # Preprocess the points
+    com_2d, polygon_pts_2d = convert_to_2d(com, polygon_pts) # Get the 2D points of the legs
+    polygon_edges = convex_hull(polygon_pts_2d) # Get the convex hull of the points
+
+    com_x, com_y = com_2d # Unpack the center of mass coordinates
+    n = len(polygon_edges) # Number of vertices in the polygon
+    if n < 3: # Not enough points to form a polygon
+        return False 
+
+    counter = 0
+    for i in range(n):
+        x1, y1 = polygon_edges[i]
+        x2, y2 = polygon_edges[(i + 1) % n] # Next point in the polygon, wrapping around to the first point
+        
+        if (com_y < y1) != (com_y < y2) and \
+        com_x < x1 + ((com_y - y1) / (y2 - y1)) * (x2 - x1):
+            counter += 1
+
+    if counter % 2 == 1: # Odd number of intersections means the point is inside the polygon
+        return True 
+    return False # Even number of intersections means the point is outside the polygon
+
 # Evaluate each leg individually in parallel
 def evaluate(individuals, individual_index):
     EVAL_TOTAL = 0  # Initialize eval total for averaging
@@ -163,7 +261,7 @@ def evaluate(individuals, individual_index):
         reset_robot()
         last_positions = {i: init_positions[i] for i in range(NUM_LEGS * LEG_PARAMS)}  # Initialize last positions for each motor
         start_time = robot.getTime()
-        max_distance, height_sum, height_samples = 0.0, 0.0, 0
+        max_distance, stability_sum, stability_samples = 0.0, 1.0, 1.0
         initial_pos = gps.getValues()
         f = 0.5  # Gait frequency
         THIS_EVAL = 0
@@ -214,16 +312,20 @@ def evaluate(individuals, individual_index):
                             if j == 2:
                                 motors[i * 3 + j].setPosition(init_positions[i * 3 + j])
                      
-
             robot.step(TIME_STEP)
-            current_pos = gps.getValues()
-            distance = math.sqrt((current_pos[0] - initial_pos[0]) ** 2 + (current_pos[1] - initial_pos[1]) ** 2)
+            body_pos = gps.getValues()
+            foot_info = get_feet_touching_ground()
+            distance = math.sqrt((body_pos[0] - initial_pos[0]) ** 2 + (body_pos[1] - initial_pos[1]) ** 2)
             max_distance = max(max_distance, distance)
-            height_sum += current_pos[2]
-            height_samples += 1
+            stable = is_statically_stable(foot_info, body_pos) # Check if the robot is statically stable
+            if stable: # Check if the robot is statically stable
+                stability_sum += 1.0
+            stability_samples += 1.0
+            if print_stability:
+                print(f"Feet touching ground: {foot_info}, we are {'stable' if stable else 'not stable'}")
                 
-        avg_height = height_sum / height_samples if height_samples > 0 else 0.0
-        THIS_EVAL = max_distance + avg_height * HEIGHT_WEIGHT
+        stability_multiplier = stability_sum / stability_samples # Percentage of the time the robot was stable applied as a multiplier
+        THIS_EVAL = max_distance * stability_multiplier # Fitness function 
         EVAL_TOTAL += THIS_EVAL
                 
 
