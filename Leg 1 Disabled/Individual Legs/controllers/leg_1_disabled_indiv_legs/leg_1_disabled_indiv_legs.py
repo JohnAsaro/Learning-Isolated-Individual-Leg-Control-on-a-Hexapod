@@ -317,7 +317,7 @@ def evaluate_leg(leg_index, individual, best_individuals):
             robot.step(TIME_STEP)
             body_pos = gps.getValues()
             foot_info = get_feet_touching_ground()
-            distance = math.sqrt((body_pos[0] - initial_pos[0]) ** 2 + (body_pos[1] - initial_pos[1]) ** 2)
+            distance = max(body_pos[0] - initial_pos[0], 0) # Calculate distance traveled foward in the x direction
             max_distance = max(max_distance, distance)
             stable = is_statically_stable(foot_info, body_pos) # Check if the robot is statically stable
             if stable: # Check if the robot is statically stable
