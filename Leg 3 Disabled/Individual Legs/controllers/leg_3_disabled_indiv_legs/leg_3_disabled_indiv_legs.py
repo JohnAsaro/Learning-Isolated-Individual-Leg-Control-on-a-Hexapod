@@ -26,8 +26,8 @@ MAX_FOWARD_BEND_BASE = math.radians(90)
 MIN_FOWARD_BEND_BASE = math.radians(-90)
 
 # Shoulder range of motion
-MAX_FOWARD_BEND_SHOULDER = math.radians(90)
-MIN_FOWARD_BEND_SHOULDER = math.radians(-90)
+MAX_FOWARD_BEND_SHOULDER = math.radians(60)
+MIN_FOWARD_BEND_SHOULDER = math.radians(-75)
 
 # Knee range of motion
 MAX_FORWARD_BEND_KNEE = math.radians(-20)
