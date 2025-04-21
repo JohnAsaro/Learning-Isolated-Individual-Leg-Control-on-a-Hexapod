@@ -111,7 +111,7 @@ touch_sensors = [] # Foot touch sensors
 for foot in robot_feet:
     if robot_feet.index(foot) != DISABLED_LEG: # If not disabled leg get in the club
         touch_sensors.append((robot.getDevice(foot), robot_feet.index(foot))) # Tuple of the device and its indexs
-        TouchSensor.enable(robot.getDevice(foot), 1)
+        TouchSensor.enable(robot.getDevice(foot), TIME_STEP)
     else: # Otherwise turn off sensor
         TouchSensor.disable(robot.getDevice(foot))
 
@@ -172,7 +172,7 @@ def reset_robot():
 def get_feet_touching_ground():
     feet_touching_ground = []
     for sensor in touch_sensors:
-        if TouchSensor.getValue(sensor[0]) > 0.0: # Almost works
+        if TouchSensor.getValue(sensor[0]) > 0.0: 
             gps_name = feet_positions[sensor[1]] # Name of the def used to track translation of this sensor
             foot_gps = robot.getDevice(gps_name)
             foot_position = foot_gps.getValues()

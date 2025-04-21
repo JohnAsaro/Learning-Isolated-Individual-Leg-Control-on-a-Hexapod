@@ -11,6 +11,17 @@ import os
 import csv
 import copy
 
+# Fitness Function Used
+simple_distance = False # Fitness is just based on distance traveled 
+static_stability = False # Fitness is based on distance traveled while keeping the robot statically stable
+touch_ground_penalty = True # Penalize the robot for touching the ground with anything that isn't its feet
+fitness_functions = [static_stability, simple_distance, touch_ground_penalty] # List of fitness functions
+
+if sum(fitness_functions) > 1:
+    raise ValueError("Only one fitness function can be selected at a time.")
+elif sum(fitness_functions) == 0:
+    raise ValueError("At least one fitness function must be selected.")
+
 # Constants
 DISABLED_LEG = -1 # Disable this leg
 
@@ -46,13 +57,15 @@ keyboard.enable(TIME_STEP)
 # Global debug flag
 debug_mode = False # Print info about motor positions in real time
 print_fitness = True # Print Amplitude, Phase, Offset, and Fitness info
-print_stability = False
+print_stability = False # Print if the robot is statically stable or not
+print_ground = False # Print if the robot is touching the ground or not
 
 # Function to poll the keyboard in a separate thread
 def poll_keyboard():
     global debug_mode
     global print_fitness
     global print_stability
+    global print_ground
     while True:
         key = keyboard.getKey()
         if key in [ord('Q'), ord('q')]:  # Toggle debug mode on 'Q' key press
@@ -72,6 +85,12 @@ def poll_keyboard():
             print("\n")
             print("_______________________________________________________\n")
             print(f"Stability print statements {'enabled' if debug_mode else 'disabled'}")
+            print("_______________________________________________________\n")
+        if key in [ord('R'), ord('r')]:  # Toggle ground print statements on 'R' press
+            print_ground = not print_ground
+            print("\n")
+            print("_______________________________________________________\n")
+            print(f"Ground print statements {'enabled' if debug_mode else 'disabled'}")
             print("_______________________________________________________\n")
             
 
@@ -110,8 +129,8 @@ touch_sensors = [] # Foot touch sensors
 
 for foot in robot_feet:
     if robot_feet.index(foot) != DISABLED_LEG: # If not disabled leg get in the club
-        touch_sensors.append((robot.getDevice(foot), robot_feet.index(foot))) # Tuple of the device and its indexs
-        TouchSensor.enable(robot.getDevice(foot), 1)
+        touch_sensors.append((robot.getDevice(foot), robot_feet.index(foot))) # Tuple of the device and its index
+        TouchSensor.enable(robot.getDevice(foot), TIME_STEP)
     else: # Otherwise turn off sensor
         TouchSensor.disable(robot.getDevice(foot))
 
@@ -172,7 +191,7 @@ def reset_robot():
 def get_feet_touching_ground():
     feet_touching_ground = []
     for sensor in touch_sensors:
-        if TouchSensor.getValue(sensor[0]) > 0.0: # Almost works
+        if TouchSensor.getValue(sensor[0]) > 0.0:
             gps_name = feet_positions[sensor[1]] # Name of the def used to track translation of this sensor
             foot_gps = robot.getDevice(gps_name)
             foot_position = foot_gps.getValues()
@@ -250,12 +269,13 @@ def is_statically_stable(polygon_pts, com): # Find if the center of mass is insi
 # Evaluate fitness of an individual
 def evaluate(individual):
     EVAL_TOTAL = 0
-    
+
     for _ in range(NUM_EVALS): # Evaluate this individual a number of times
         reset_robot()
         last_positions = {i: init_positions[i] for i in range(PARAMS)}  # Initialize last positions for each motor
         start_time = robot.getTime()
-        max_distance, stability_sum, stability_samples = 0.0, 1.0, 1.0
+        max_distance, stability_sum, stability_samples, touched_ground_sum, touched_ground_samples = 0.0, 1.0, 1.0, 1.0, 1.0
+        ground_pos = (6.17248, 24.1324, 60.5806) # Initial ground height
         initial_pos = gps.getValues()
         f = 0.5  # Gait frequency
 
@@ -308,19 +328,52 @@ def evaluate(individual):
                     motors[i].setPosition(position)
             
             robot.step(TIME_STEP)
+
+            # Distance function
             body_pos = gps.getValues()
-            foot_info = get_feet_touching_ground()
             distance = max(body_pos[0] - initial_pos[0], 0) # Calculate distance traveled foward in the x direction
             max_distance = max(max_distance, distance)
+            
+            # Stability function
+            foot_info = get_feet_touching_ground()
             stable = is_statically_stable(foot_info, body_pos) # Check if the robot is statically stable
             if stable: # Check if the robot is statically stable
                 stability_sum += 1.0
             stability_samples += 1.0
             if print_stability:
-                print(f"Feet touching ground: {foot_info}, we are {'stable' if stable else 'not stable'}")
-        
+                print(f"We are {'stable' if stable else 'not stable'}")
+            
+            # Touch ground penalty function
+
+            # This doesnt work properly, y_range and x_range cant represent the bodies relativity to the ground,
+            # the way to do this is to put 5 gps sensors on the body, the original is the middle one, then we need 
+            # one on each corner of the body, then we can calculate relativity to the ground even if its flipped on its side
+            z_range, y_range, x_range = 0.125, 0.5, 1.25 # Z, Y, X range of the body
+            ground_info = []
+            for foot in foot_info:
+                ground_info.append((foot[1][2], foot[1][1], foot[1][0])) # Organize tuple with z pos being highest prority for max
+            if len(ground_info) > 1:
+                ground_pos = max(ground_info) 
+            elif len(ground_info) == 1:
+                ground_pos = ground_info[0]
+
+            if body_pos[2] + z_range > ground_pos[0] > body_pos[2] - z_range or body_pos[1] + y_range > ground_pos[1] > body_pos[1] - y_range or body_pos[0] + x_range > ground_pos[2] > body_pos[0] - x_range: # If the center of mass is within some range of the ground height
+                touched_ground_sum += 1.0
+            touched_ground_samples += 1.0
+            if print_ground:
+                print(f"We are {'touching the ground' if body_pos[2] + z_range > ground_pos[0] > body_pos[2] - z_range or body_pos[1] + y_range > ground_pos[1] > body_pos[1] - y_range or body_pos[0] + x_range > ground_pos[2] > body_pos[0] - x_range else 'not touching the ground'}")
+                print(f"Ground pos: {[ground_pos[2], ground_pos[1], ground_pos[0]]}, Body pos: {body_pos}")
         stability_multiplier = stability_sum / stability_samples # Percentage of the time the robot was stable applied as a multiplier
-        THIS_EVAL = max_distance * stability_multiplier # Fitness function 
+        touched_ground_multiplier = touched_ground_sum / touched_ground_samples # Percentage of the time the robot was touching the ground applied as a multiplier
+
+        THIS_EVAL = 0.0 # Fitness value   
+        if simple_distance:
+            THIS_EVAL = max_distance # Fitness function based solely on distance traveled
+        elif static_stability:
+            THIS_EVAL = max_distance * stability_multiplier # Fitness function based on distance traveled while keeping the robot statically stable
+        elif touch_ground_penalty:
+            THIS_EVAL = max_distance * touched_ground_multiplier # Fitness function based on distance traveled while keeping body off the ground
+    
         EVAL_TOTAL = THIS_EVAL + EVAL_TOTAL 
         
     individual["fitness"] = EVAL_TOTAL/NUM_EVALS # Average of total evals

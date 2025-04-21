@@ -17,13 +17,15 @@ PROTO Mantis [
   field SFBool     supervisor      TRUE       # Is `Robot.supervisor`.
   field SFBool     synchronization TRUE        # Is `Robot.synchronization`.
   field SFBool     selfCollision   TRUE        # Is `Robot.selfCollision`. 
-  field MFNode     extensionSlot   []          # Extends the robot with new nodes in the extension slot.
+  field MFNode     extensionSlot   []          # Extends the robot body with new nodes in the extension slot.
   field MFNode     extensionSlotRAS  []       # GPS for leg 0         
   field MFNode     extensionSlotLAS  []       # GPS for leg 1         
   field MFNode     extensionSlotRMS  []       # GPS for leg 2         
   field MFNode     extensionSlotLMS  []       # GPS for leg 3 
   field MFNode     extensionSlotRPS  []       # GPS for leg 4 
   field MFNode     extensionSlotLPS  []       # GPS for leg 5 
+  field MFNode     extensionSlotRMC []     # TouchSensor for RMC
+  #field MFNode     extensionSlotBody []    # TouchSensor for Body
 ]
 {
   Robot {
@@ -97,6 +99,51 @@ PROTO Mantis [
           mass 200
         }
       }
+      #DEF B_BUMP TouchSensor{
+      #  translation 0 0 1.07
+      #  name "belly_bumper"
+      #  boundingObject USE BODY_BOT
+      #  physics Physics {
+      #    density -1
+      #    mass 200
+      #  }
+      #}
+      #DEF belly_touch_sensor TouchSensor {
+      #  translation 0 0 1.07
+      #  children [
+      #        DEF bumper_shape Shape {
+      #          geometry Box {
+      #            size 1.5 0.25 0.15
+      #          }
+      #    }
+      #  ]
+      #  name "belly_bumper"
+      #  boundingObject USE bumper_shape
+      #  physics Physics {
+      #    density -1
+      #    mass 1
+      #  }
+      #}
+      #DEF BODY_CONTACT TouchSensor {
+      #  translation 1.6 0 0
+      #  children [
+      #    DEF BODY_CONTACT_SHAPE Shape {
+      #      appearance PBRAppearance {
+      #        roughness 0.3
+      #      }
+      #      geometry Sphere {
+      #        radius 0.15
+      #        subdivision 2
+      #      }
+      #    }
+      #  ]
+      #  name "belly_bumper"
+      #  boundingObject USE BODY_CONTACT_SHAPE
+      #  physics DEF BODY_CONTACT_PHYSICS Physics {
+      #    density -1
+      #    mass 1
+      #  }
+      #}
       DEF RPC_HINGE_JOINT HingeJoint {
         jointParameters HingeJointParameters {
           position -0.699842
@@ -519,6 +566,9 @@ PROTO Mantis [
                                 height 0.1
                                 radius 0.09
                               }
+                            }
+                            Group {
+                              children IS extensionSlotRMC
                             }
                           ]
                           name "RMANKLE"
