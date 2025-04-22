@@ -348,17 +348,15 @@ def evaluate(individual):
                 print(f"We are {'stable' if stable else 'not stable'}")
             
             # Touch ground penalty function
-            
-            z_range_front, z_range_mid, z_range_back = 0.125, 0.125, 0.25 # Z, Y, X range of the body
+            z_range_front, z_range_mid, z_range_back = 0.125, 0.125, 0.125 # Z, Y, X range of the body
             z_front, z_mid, z_back = gps_front.getValues()[2], body_pos[2], gps_back.getValues()[2]
             ground_info = []
             for foot in foot_info:
                 ground_info.append(foot[1][2]) # Get z-pos of ground
             
-
             flipped = False
             if len(ground_info) > 1:
-                ground_pos = max(ground_info) 
+                ground_pos = min(ground_info) 
             elif len(ground_info) == 1:
                 ground_pos = ground_info[0]
             else:
@@ -370,6 +368,7 @@ def evaluate(individual):
             if print_ground:
                 print(f"We are {'touching the ground' if flipped or z_front + z_range_front > ground_pos > z_front - z_range_front or z_mid + z_range_mid > ground_pos > z_mid - z_range_mid or z_back + z_range_back > ground_pos > z_back - z_range_back else 'not touching the ground'}")
                 print(f"Ground pos: {ground_pos}, z pos front: {z_front}, z pos mid: {z_mid}, z pos back: {z_back}")
+        
         stability_multiplier = stability_sum / stability_samples # Percentage of the time the robot was stable applied as a multiplier
         touched_ground_multiplier = touched_ground_sum / touched_ground_samples # Percentage of the time the robot was touching the ground applied as a multiplier
 
