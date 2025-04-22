@@ -363,7 +363,7 @@ def evaluate_leg(leg_index, individual, best_individuals):
             
             flipped = False
             if len(ground_info) > 1:
-                ground_pos = min(ground_info) 
+                ground_pos = max(ground_info) 
             elif len(ground_info) == 1:
                 ground_pos = ground_info[0]
             else:
