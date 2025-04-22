@@ -371,7 +371,9 @@ def evaluate_leg(leg_index, individual, best_individuals):
 
             if flipped or z_front + z_range_front > ground_pos > z_front - z_range_front or z_mid + z_range_mid > ground_pos > z_mid - z_range_mid or z_back + z_range_back > ground_pos > z_back - z_range_back: # If the center of mass is within some range of the ground height
                 touched_ground_sum += 1.0
-            touched_ground_samples += 1.0
+                touched_ground_samples += 1.0
+            else:
+                touched_ground_samples += 1.0
             if print_ground:
                 print(f"We are {'touching the ground' if flipped or z_front + z_range_front > ground_pos > z_front - z_range_front or z_mid + z_range_mid > ground_pos > z_mid - z_range_mid or z_back + z_range_back > ground_pos > z_back - z_range_back else 'not touching the ground'}")
                 print(f"Ground pos: {ground_pos}, z pos front: {z_front}, z pos mid: {z_mid}, z pos back: {z_back}")
