@@ -94,7 +94,7 @@ PROTO Mantis [
         }
         physics Physics {
           density -1
-          mass 200
+          mass 250
         }
       }
       DEF RPC_HINGE_JOINT HingeJoint {

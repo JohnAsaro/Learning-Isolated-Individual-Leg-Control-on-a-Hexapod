@@ -12,9 +12,9 @@ import csv
 import copy
 
 # Fitness Function Used
-simple_distance = False # Fitness is just based on distance traveled 
+simple_distance = True # Fitness is just based on distance traveled 
 static_stability = False # Fitness is based on distance traveled while keeping the robot statically stable
-touch_ground_penalty = True # Penalize the robot for touching the ground with anything that isn't its feet
+touch_ground_penalty = False # Penalize the robot for touching the ground with anything that isn't its feet
 fitness_functions = [static_stability, simple_distance, touch_ground_penalty] # List of fitness functions
 
 if sum(fitness_functions) > 1:
@@ -45,7 +45,7 @@ MAX_FORWARD_BEND_KNEE = math.radians(-20)
 MIN_FORWARD_BEND_KNEE = math.radians(-120)
 
 # Limit range of motion to + or - this many degrees
-LIMIT_ROM = 5
+LIMIT_ROM = 2
 
 # Initialize Supervisor and Devices
 robot = Supervisor()
@@ -363,15 +363,17 @@ def evaluate_leg(leg_index, individual, best_individuals):
             
             flipped = False
             if len(ground_info) > 1:
-                ground_pos = min(ground_info) 
+                ground_pos = max(ground_info) 
             elif len(ground_info) == 1:
                 ground_pos = ground_info[0]
             else:
                 flipped = True # If no legs touching the ground, we have flipped
 
             if flipped or z_front + z_range_front > ground_pos > z_front - z_range_front or z_mid + z_range_mid > ground_pos > z_mid - z_range_mid or z_back + z_range_back > ground_pos > z_back - z_range_back: # If the center of mass is within some range of the ground height
+                touched_ground_samples += 1.0
+            else:
+                touched_ground_samples += 1.0
                 touched_ground_sum += 1.0
-            touched_ground_samples += 1.0
             if print_ground:
                 print(f"We are {'touching the ground' if flipped or z_front + z_range_front > ground_pos > z_front - z_range_front or z_mid + z_range_mid > ground_pos > z_mid - z_range_mid or z_back + z_range_back > ground_pos > z_back - z_range_back else 'not touching the ground'}")
                 print(f"Ground pos: {ground_pos}, z pos front: {z_front}, z pos mid: {z_mid}, z pos back: {z_back}")

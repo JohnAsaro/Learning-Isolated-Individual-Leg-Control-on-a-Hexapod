@@ -12,9 +12,9 @@ import csv
 import copy
 
 # Fitness Function Used
-simple_distance = False # Fitness is just based on distance traveled 
+simple_distance = True # Fitness is just based on distance traveled 
 static_stability = False # Fitness is based on distance traveled while keeping the robot statically stable
-touch_ground_penalty = True # Penalize the robot for touching the ground with anything that isn't its feet
+touch_ground_penalty = False # Penalize the robot for touching the ground with anything that isn't its feet
 fitness_functions = [static_stability, simple_distance, touch_ground_penalty] # List of fitness functions
 
 if sum(fitness_functions) > 1:
@@ -45,7 +45,7 @@ MAX_FORWARD_BEND_KNEE = math.radians(-20)
 MIN_FORWARD_BEND_KNEE = math.radians(-120)
 
 # Limit range of motion to + or - this many degrees
-LIMIT_ROM = 5
+LIMIT_ROM = 2
 
 # Initialize Supervisor and Devices
 robot = Supervisor()
