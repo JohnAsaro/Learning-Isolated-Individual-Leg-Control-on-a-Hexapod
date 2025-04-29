@@ -45,7 +45,7 @@ MAX_FORWARD_BEND_KNEE = math.radians(-20)
 MIN_FORWARD_BEND_KNEE = math.radians(-120)
 
 # Limit range of motion to + or - this many degrees
-LIMIT_ROM = 2
+LIMIT_ROM = 5
 
 # Initialize Supervisor and Devices
 robot = Supervisor()
